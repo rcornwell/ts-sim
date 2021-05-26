@@ -1,0 +1,103 @@
+    1 			     THE Q PUBLIC LICENSE
+    2 				  version 1.0
+    3 
+    4 		   Copyright (C) 1999-2005 Trolltech AS, Norway.
+    5 		       Everyone is permitted to copy and
+    6 		       distribute this license document.
+    7 
+    8 The intent of this license is to establish freedom to share and change the
+    9 software regulated by this license under the open source model.
+   10 
+   11 This license applies to any software containing a notice placed by the
+   12 copyright holder saying that it may be distributed under the terms of
+   13 the Q Public License version 1.0.  Such software is herein referred to as
+   14 the Software.  This license covers modification and distribution of the
+   15 Software, use of third-party application programs based on the Software,
+   16 and development of free software which uses the Software.
+   17 
+   18 				 Granted Rights
+   19 
+   20 1. You are granted the non-exclusive rights set forth in this license
+   21    provided you agree to and comply with any and all conditions in this
+   22    license.  Whole or partial distribution of the Software, or software
+   23    items that link with the Software, in any form signifies acceptance of
+   24    this license.
+   25 
+   26 2. You may copy and distribute the Software in unmodified form provided
+   27    that the entire package, including - but not restricted to - copyright,
+   28    trademark notices and disclaimers, as released by the initial developer
+   29    of the Software, is distributed.
+   30 
+   31 3. You may make modifications to the Software and distribute your
+   32    modifications. The following restrictions apply to modifications:
+   33
+   34
+   35      a. Modifications must not alter or remove any copyright notices in
+   36         the Software.
+   37 
+   38      b. When modifications to the Software are released under this
+   39         license, a non-exclusive royalty-free right is granted to the
+   40         initial developer of the Software to distribute your modification
+   41         in future versions of the Software provided such versions remain
+   42         available under these terms in addition to any other license(s) of
+   43         the initial developer.
+   44 
+   45 4. You may distribute machine-executable forms of the Software or
+   46    machine-executable forms of modified versions of the Software, provided
+   47    that you meet these restrictions:
+   48 
+   49      a. You must include this license document in the distribution.
+   50 
+   51      b. You must ensure that all recipients of the machine-executable forms
+   52         are also able to receive the complete machine-readable source code
+   53         to the distributed Software, including all modifications, without
+   54         any charge beyond the costs of data transfer, and place prominent
+   55         notices in the distribution explaining this.
+   56 
+   57      c. You must ensure that all modifications included in the
+   58         machine-executable forms are available under the terms of this
+   59         license.
+   60 
+   61 5. You may use the original or modified versions of the Software to
+   62    compile, link and run application programs legally developed by you
+   63    or by others.
+   64 
+   65 6. You may develop application programs, reusable components and other
+   66    software items that link with the original or modified versions of the
+   67    Software.  These items, when distributed, are subject to the following
+   68    requirements:
+   69 
+   70      a. You must ensure that all recipients of machine-executable forms of
+   71         these items are also able to receive and use the complete
+   72         machine-readable source code to the items without any charge
+   73         beyond the costs of data transfer.
+   74 
+   75      b. You must explicitly license all recipients of your items to use
+   76         and re-distribute original and modified versions of the items in
+   77         both machine-executable and source code forms. The recipients must
+   78         be able to do so without any charges whatsoever, and they must be
+   79         able to re-distribute to anyone they choose.
+   80 
+   81 
+   82      c. If the items are not available to the general public, and the
+   83         initial developer of the Software requests a copy of the items,
+   84         then you must supply one.
+   85 
+   86 			    Limitations of Liability
+   87 
+   88 In no event shall the initial developers or copyright holders be liable
+   89 for any damages whatsoever, including - but not restricted to - lost
+   90 revenue or profits or other direct, indirect, special, incidental or
+   91 consequential damages, even if they have been advised of the possibility
+   92 of such damages, except to the extent invariable law, if any, provides
+   93 otherwise.
+   94 
+   95 			          No Warranty
+   96 
+   97 The Software and this license document are provided AS IS with NO WARRANTY
+   98 OF ANY KIND, INCLUDING THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS
+   99 FOR A PARTICULAR PURPOSE.
+  100                                  Choice of Law
+  101 
+  102 This license is governed by the Laws of United States. Disputes shall be settled
+  103 by Durham City Court, North Carolina, USA.
