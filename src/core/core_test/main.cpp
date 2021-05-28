@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <vector>
 #include <map>
+#include "Options.h"
 #include "System.h"
 #include "CPU.h"
 #include "../../src/core/Config.h"
@@ -119,49 +120,9 @@ public:
         return 1;
     }
 
-//    static void registerCPU(const string & name, CPUFactory *factory)
-//    {
-//        cpu_factories.insert(make_pair(name, factory));
-//    }
-//
-//    bool create_cpu(const string &model, int number)
-//    {
-//        if (number != 0)
-//            return false;
-//        cpu = cpu_factories[model]->create();
-//        return true;
-//    }
-//
-//    virtual CPU_v get_cpu(int number)
-//    {
-////        if (number != 0)
-////            return nullptr;
-//        return cpu;
-//    }
-//
-//    static void registerIO(const string & name, IOFactory *factory)
-//    {
-//        io_factories.insert(make_pair(name, factory));
-//    }
-//
-//    bool create_io(const string &model)
-//    {
-//        io = io_factories[model]->create();
-//        return true;
-//    }
-
-    
     REGISTER_SYSTEM_TEMPLATE_CPU
     REGISTER_SYSTEM_TEMPLATE_IO
     REGISTER_SYSTEM_TEMPLATE_MEM
-    
-//private:
-//    static map<string, CPUFactory *> cpu_factories;
-//    static map<string, IOFactory *> io_factories;
-//
-//    CPU_v              cpu;
-//    IO_v            io;
-
 };
 };
 
@@ -218,6 +179,39 @@ REGISTER_CPU(test, s1);
 REGISTER_CPU(test, s2);
 };
 
+SUITE(OptionParser)
+{
+    TEST(Create) {
+        option::OptionParser op("example");
+        CHECK(op.getDescription() == "example");
+    }
+    
+    TEST(Create2) {
+        option::OptionParser op("Allowed options");
+        auto help_option = op.add<option::OptionSwitch>("h", "help", "produce help message");
+        cout << op.help() << endl;
+    }
+    
+    TEST(Option1) {
+        option::OptionParser op("Allowed2 options");
+        auto help_option = op.add<option::OptionSwitch>("h", "help", "produce help message");
+        auto int_option = op.add<option::OptionValue<int>>("i", "int", "test integer");
+        const char *args[3] = { "prog", "-h", NULL };
+        op.parse(2, args);
+        CHECK_EQUAL(help_option->is_set(), true);
+    }
+    
+    TEST(Option2) {
+        option::OptionParser op("Allowed3 options");
+        auto help_option = op.add<option::OptionSwitch>("h", "help", "produce help message");
+        auto int_option = op.add<option::OptionValue<int>>("i", "int", "test integer");
+        const char *args[4] = { "prog", "-i", "42", NULL };
+        op.parse(3, args);
+        CHECK_EQUAL(int_option->is_set(), true);
+        CHECK_EQUAL(help_option->is_set(), false);
+        CHECK_EQUAL(int_option->getValue(), 42);
+    }
+}
 SUITE(ConfigLexer)
 {
 
@@ -374,6 +368,44 @@ SUITE(Config) {
         core::Config conf;
         string ist{"system test cpu s1:opt_hello(timer,home=055) "};
         CHECK(conf(ist));
+        core::CPU_v& cpu_v = conf.sys->cpus[0];
+        auto caller = [](const auto& obj) { return obj->GetName(); };
+        string name = std::visit(caller, cpu_v);
+        CHECK_EQUAL(name, "opt_hello");
+        std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
+                std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
+        std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
+                std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
+        CHECK_EQUAL(cpu->timer, true);
+        CHECK_EQUAL(cpu->home, 055);
+    }
+    
+    TEST(CPUOptions3) {
+        core::Config conf;
+        string ist{"system test"};
+        string ist2{"cpu s1:opt_hello(home=057) "};
+        CHECK(conf(ist));
+        CHECK(conf(ist2));
+        core::CPU_v& cpu_v = conf.sys->cpus[0];
+        auto caller = [](const auto& obj) { return obj->GetName(); };
+        string name = std::visit(caller, cpu_v);
+        CHECK_EQUAL(name, "opt_hello");
+        std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
+                std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
+        std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
+                std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
+        CHECK_EQUAL(cpu->timer, false);
+        CHECK_EQUAL(cpu->home, 057);
+    }
+    
+    TEST(MemOptions1) {
+        core::Config conf;
+        string ist1{"system test"};
+        string ist2{"cpu s1:opt_hello(timer,home=055) "};
+        string ist3{"memory m1:mem=opt_hello 64k ()"};
+        CHECK(conf(ist1));
+        CHECK(conf(ist2));
+        CHECK(conf(ist3));
         core::CPU_v& cpu_v = conf.sys->cpus[0];
         auto caller = [](const auto& obj) { return obj->GetName(); };
         string name = std::visit(caller, cpu_v);

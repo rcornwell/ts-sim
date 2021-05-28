@@ -196,37 +196,68 @@ public:
      * @brief Sets location to assign values too.
      * @param var Location of variable in object.
      */
-    void assign_to(T* var);
+    void assign_to(T* var)
+    {
+        assign_to_ = var;
+        update_reference();
+    }
 
     /**
      * @brief Set the value to this value.
      * @param value - Value to set.
      */
-    void setValue(const T& value);
+    void setValue(const T& value)
+    {
+        clear();
+        add_value(value);
+    }
 
     /**
      * @brief Get the value of the option.
      * @return value of object.
      */
-    T getValue() const;
+    T getValue() const
+    {
+        // If not set and default, return default
+        if (!this->is_set() && default_) {
+            return *default_;
+        }
+
+        // If not set and no default, throw exception.
+        if (!this->is_set()) {
+            throw "";
+        }
+        return value_;
+    }
 
     /**
      * @brief Set the default value to use if option not seen.
      * @param value
      */
-    void setDefault(const T& value);
+    void setDefault(const T& value)
+    {
+        this->default_.reset(new T);
+        *this->default_ = value;
+        update_reference();
+    }
 
     /**
      * @brief Indicate if a default value is set.
      * @return value
      */
-    bool hasDefault() const;
+    bool hasDefault() const
+    {
+        return (this->default_ != nullptr);
+    }
 
     /**
      * @brief Get the default value or nullptr if not set.
      * @return value
      */
-    T getDefault() const;
+    T getDefault() const
+    {
+        return *this->default_;
+    }
 
 protected:
     /**
@@ -239,18 +270,34 @@ protected:
      * @brief Called after a change is made to option to update default and
      *      assign values.
      */
-    virtual void update_reference();
+    virtual void update_reference()
+    {
+        if (this->assign_to_) {
+            if (this->is_set() || default_)
+                *this->assign_to_ = getValue();
+        }
+    }
+
 
     /**
      * @brief Add a value to option. Currently only one value is supported.
      * @param value
      */
-    virtual void add_value(const T& value);
+    virtual void add_value(const T& value)
+    {
+        value_ = value;
+        is_set_ = true;
+        update_reference();
+    }
 
     /**
      * @brief restore option to being unset.
      */
-    void clear() override;
+    void clear() override
+    {
+        is_set_ = false;
+        update_reference();
+    }
 
     /**
      * @brief Pointer to default value.
@@ -272,6 +319,7 @@ protected:
      */
     bool is_set_;
 };
+
 
 /**
  * @class ConfigBool
@@ -295,6 +343,7 @@ public:
         is_set_ = false;
     }
 
+    // The default value for boolean flags is false.
     void setDefault(const bool& value) = delete;
 protected:
     /**
@@ -334,7 +383,10 @@ public:
      * @param value - Value to set.
      * @param name - Name of option.
      */
-    void add_option(T& value, const std::string& name);
+    void add_option(T& value, const std::string& name)
+    {
+        value_map_.insert(name, value);
+    }
 
 protected:
     /**
@@ -394,14 +446,34 @@ public:
     * @return  pointer to option.
     */
     template<typename T, Attribute attribute, typename... Ts>
-    std::shared_ptr<T> add(Ts&&... params);
+    std::shared_ptr<T> add(Ts&&... params)
+    {
+        static_assert(
+            std::is_base_of<ConfigOption, typename std::decay<T>::type>::value,
+            "type T must be Bool, Value or Implicit"
+        );
+        std::shared_ptr<T> option = std::make_shared<T>(std::forward<Ts>(params)...);
+
+        for (const auto& o: options_) {
+            if (option->getName() == o->getName())
+                throw std::invalid_argument("duplicate option" + option->getName());
+        }
+        option->setAttribute(attribute);
+        options_.push_back(option);
+        return option;
+    }
+
 
     /**
     * @brief Add an option with a default attribute.
     * @return  pointer to option.
     */
     template<typename T, typename... Ts>
-    std::shared_ptr<T> add(Ts&&... params);
+    std::shared_ptr<T> add(Ts&&... params)
+    {
+        return add<T, Attribute::optional>(std::forward<Ts>(params)...);
+    }
+
 
     /**
      * @brief Scan and set a collection of options.
@@ -433,150 +505,5 @@ protected:
      */
     std::vector<ConfigOption_ptr> options_;
 };
-
-/**
- * @brief Set the value to this value.
- * @param value - Value to set.
- * @detail First clear whatever was set, then add in this value.
- */
-template<class T>
-inline void ConfigValue<T>::setValue(const T& value)
-{
-    clear();
-    add_value(value);
-}
-
-/**
- * @brief Get the value of the option.
- * @return value of object.
- * @detail If option not set, return default, else throw exception.
- *     Otherwise return the value.
- */
-template<class T>
-inline T ConfigValue<T>::getValue() const
-{
-    if (!this->is_set() && default_) {
-        return *default_;
-    }
-
-    if (!this->is_set()) {
-        throw "";
-    }
-
-    return value_;
-}
-
-/**
-  * @brief Set the default value to use if option not seen.
-  * @param value
-  */
-template<class T>
-inline void ConfigValue<T>::setDefault(const T& value)
-{
-    this->default_.reset(new T);
-    *this->default_ = value;
-    update_reference();
-}
-
-/**
-* @brief Indicate if a default value is set.
-* @return value
-*/
-template<class T>
-inline bool ConfigValue<T>::hasDefault() const
-{
-    return (this->default_ != nullptr);
-}
-
-/**
-  * @brief Get the default value or nullptr if not set.
-  * @return value
-  */
-template<class T>
-inline T ConfigValue<T>::getDefault() const
-{
-    return *this->default_;
-}
-
-/**
- * @brief Called after a change is made to option to update default and
- *      assign values.
- * @detail if there is an assigned value it is updated. If the values is
- *    not set it is set to the default value.
- */
-template<class T>
-inline void ConfigValue<T>::update_reference()
-{
-    if (this->assign_to_) {
-        if (this->is_set() || default_)
-            *this->assign_to_ = getValue();
-    }
-}
-
-/**
- * @brief Add a value to option. Currently only one value is supported.
- * @detail mark option as set, and update any changes.
- * @param value
- */
-template<class T>
-inline void ConfigValue<T>::add_value(const T& value)
-{
-    value_ = value;
-    is_set_ = true;
-    update_reference();
-}
-
-/**
- * @brief restore option to being unset.
- */
-template<class T>
-inline void ConfigValue<T>::clear()
-{
-    is_set_ = false;
-    update_reference();
-}
-
-/**
- * @brief Add a value into multiple choice options.
- * @param value
- * @param name
- */
-template<typename T>
-inline void ConfigMap<T>::add_option(T& value, const std::string& name)
-{
-    value_map_.insert(name, value);
-}
-
-/**
-* @brief Add an option with a given attribute.
-* @return  pointer to option.
-*/
-template<typename T, typename... Ts>
-inline std::shared_ptr<T> ConfigOptionParser::add(Ts&&... params)
-{
-    return add<T, Attribute::optional>(std::forward<Ts>(params)...);
-}
-
-/**
- * @brief Add an option with a default attribute.
- * @return  pointer to option.
- */
-template<typename T, Attribute attribute, typename... Ts>
-inline std::shared_ptr<T> ConfigOptionParser::add(Ts&&... params)
-{
-    static_assert(
-        std::is_base_of<ConfigOption, typename std::decay<T>::type>::value,
-        "type T must be Bool, Value or Implicit"
-    );
-    std::shared_ptr<T> option = std::make_shared<T>(std::forward<Ts>(params)...);
-
-    for (const auto& o: options_) {
-        if (option->getName() == o->getName())
-            throw std::invalid_argument("duplicate option" + option->getName());
-    }
-    option->setAttribute(attribute);
-    options_.push_back(option);
-    return option;
-}
 
 }
