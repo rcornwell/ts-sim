@@ -5,7 +5,7 @@ project(${PROJECT_NAME} VERSION 0.0.0
 	DESCRIPTION "Time Sharing system simulator")
 
 # Generate Doxygen documentation files
-option(BUILD_DOC "Build documenation" ON)
+option(BUILD_DOC "Build documenation" OFF)
 option(RUN_TESTS "Run tests" ON)
 
 if (BUILD_DOC)
