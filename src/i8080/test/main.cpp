@@ -17,7 +17,6 @@
  *
  */
 
-#include <UnitTest++.h>
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -28,61 +27,10 @@
 #include "RAM.h"
 #include "IO.h"
 #include "ConfigOption.h"
+#include "CppUTest/TestHarness.h"
+#include "CppUTest/CommandLineTestRunner.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//
-// To add a test, simply put the following code in the a .cpp file of your choice:
-//
-// =================================
-// Simple Test
-// =================================
-//
-//  TEST(YourTestName)
-//  {
-//  }
-//
-// The TEST macro contains enough machinery to turn this slightly odd-looking syntax into legal C++, and automatically register the test in a global list.
-// This test list forms the basis of what is executed by RunAllTests().
-//
-// If you want to re-use a set of test data for more than one test, or provide setup/teardown for tests,
-// you can use the TEST_FIXTURE macro instead. The macro requires that you pass it a class name that it will instantiate, so any setup and teardown code should be in its constructor and destructor.
-//
-//  struct SomeFixture
-//  {
-//    SomeFixture() { /* some setup */ }
-//    ~SomeFixture() { /* some teardown */ }
-//
-//    int testData;
-//  };
-//
-//  TEST_FIXTURE(SomeFixture, YourTestName)
-//  {
-//    int temp = testData;
-//  }
-//
-// =================================
-// Test Suites
-// =================================
-//
-// Tests can be grouped into suites, using the SUITE macro. A suite serves as a namespace for test names, so that the same test name can be used in two difference contexts.
-//
-//  SUITE(YourSuiteName)
-//  {
-//    TEST(YourTestName)
-//    {
-//    }
-//
-//    TEST(YourOtherTestName)
-//    {
-//    }
-//  }
-//
-// This will place the tests into a C++ namespace called YourSuiteName, and make the suite name available to UnitTest++.
-// RunAllTests() can be called for a specific suite name, so you can use this to build named groups of tests to be run together.
-// Note how members of the fixture are used as if they are a part of the test, since the macro-generated test class derives from the provided fixture class.
-//
-//
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 using namespace emulator;
 using namespace std;
@@ -166,7 +114,7 @@ private:
 // 32: 321         pop  d
 // 33: 311         ret
 // 34: 323 001     out 1
-// 32: 303 023 000 jmp 
+// 32: 303 023 000 jmp
 //
 uint8_t bdos_buffer[] = {0171, 0376, 0002, 0302, 0017, 0000, 0173, 0323, 0002,
                          0311, 0376, 0011, 0300, 0325, 0032, 0023, 0376, 0044,
@@ -182,7 +130,7 @@ void load_mem(string name, Memory<uint8_t> * mem)
 {
     char *buffer;
     size_t size;
-    string  fname = dir + "/" + name;
+    string  fname = name;
 
     ifstream file (fname, ios::in|ios::binary|ios::ate);
     size = file.tellg();
@@ -194,115 +142,29 @@ void load_mem(string name, Memory<uint8_t> * mem)
     for(size_t i = 0; i < size; i++) {
         mem->write(buffer[i], i + 0x100);
     }
+    delete[] buffer;
 }
 
-SUITE(CPU)
+TEST_GROUP(CPU)
 {
-    TEST(CPU) {
-        uint64_t  tim = 0;
-        uint64_t  n_inst = 0;
-        CPU<uint8_t>      *cpu;
-        bdos      io;
-        MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
-        mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
+};
 
-        load_mem("TST8080.COM", mem);
 
-        cpu = new i8080_cpu<I8080>();
-        io.cpu = (i8080_cpu<I8080> *)cpu;
-        io.mem = mem;
-        cpu->SetMem(mem);
-        cpu->SetIO(&io);
-        cpu->start();
-        cpu->SetPC(0x100);
 
-        mem->write(0166, 0);    // Inject halt opcode.
-//        mem->write(0323, 5);  // Output
-//        mem->write(0001, 6);  // Not important.
-//        mem->write(0xc9, 7);  // return instruction.
-	for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
-	    mem->write(bdos_buffer[i], i+5);
-	}
-
-        auto start = chrono::high_resolution_clock::now();
-        while(cpu->running) {
-    //        cpu->trace();
-            tim += cpu->step();
-            n_inst++;
-        }
-        cout << endl;
-        cpu->stop();
-        auto end = chrono::high_resolution_clock::now();
-        cout << "Simulated time: " << tim << endl;
-        cout << "Excuted: " << n_inst << endl;
-        auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
-        cout << "Time: " << ctim.count() << " ns" << endl;
-        cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
-        cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
-        CHECK_EQUAL (cpu->pc, 1u);
-        delete cpu;
-        delete mem;
-    }
-
-    TEST(CPUTEST) {
-        uint64_t  tim = 0;
-        uint64_t  n_inst = 0;
-        CPU<uint8_t>      *cpu;
-        bdos      io;
-        MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
-        mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
-
-        load_mem("CPUTEST.COM", mem);
-        cpu = new i8080_cpu<I8080>();
-        io.cpu = (i8080_cpu<I8080> *)cpu;
-        io.mem = mem;
-        cpu->SetMem(mem);
-        cpu->SetIO(&io);
-        cpu->start();
-        cpu->SetPC(0x100);
-
-        mem->write(0166, 0);    // Inject halt opcode.
-//        mem->write(0323, 5);  // Output
-//        mem->write(0001, 6);  // Not important.
-//        mem->write(0xc9, 7);  // return instruction.
-	for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
-	    mem->write(bdos_buffer[i], i+5);
-	}
-        
-        auto start = chrono::high_resolution_clock::now();
-        while(cpu->running) {
-            //cpu->trace();
-            tim += cpu->step();
-            n_inst++;
-        }
-        cout << endl;
-        cpu->stop();
-        auto end = chrono::high_resolution_clock::now();
-        cout << "Simulated time: " << tim << endl;
-        cout << "Excuted: " << n_inst << endl;
-        auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
-        cout << "Time: " << ctim.count() << " ns" << endl;
-        cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
-        cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
-        CHECK_EQUAL (cpu->pc, 1u);
-        delete cpu;
-        delete mem;
-    }
-
-    TEST(CPUPRE) {
+    TEST(CPU, CPUPRE) {
         uint64_t  tim = 0;
         uint64_t   n_inst = 0;
         CPU<uint8_t>      *cpu;
-        bdos      io;
+        bdos      *io(new bdos());
         MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
         mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
 
         load_mem("8080PRE.COM", mem);
         cpu = new i8080_cpu<I8080>();
-        io.cpu = (i8080_cpu<I8080> *)cpu;
-        io.mem = mem;
+        io->cpu = (i8080_cpu<I8080> *)cpu;
+        io->mem = mem;
         cpu->SetMem(mem);
-        cpu->SetIO(&io);
+        cpu->SetIO(io);
         cpu->start();
         cpu->SetPC(0x100);
 
@@ -313,7 +175,7 @@ SUITE(CPU)
 	for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
 	    mem->write(bdos_buffer[i], i+5);
 	}
-        
+
         auto start = chrono::high_resolution_clock::now();
         while(cpu->running) {
             //cpu->trace();
@@ -331,23 +193,22 @@ SUITE(CPU)
        cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
         CHECK_EQUAL (cpu->pc, 1u);
         delete cpu;
-        delete mem;
     }
 
-    TEST(CPUExer) {
+    TEST(CPU, CPUExer) {
         uint64_t  tim = 0;
         uint64_t   n_inst = 0;
         CPU<uint8_t>      *cpu;
-        bdos      io;
+        bdos      *io(new bdos());
         MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
         mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
 
         load_mem("8080EXER.COM", mem);
         cpu = new i8080_cpu<I8080>();
-        io.cpu = (i8080_cpu<I8080> *)cpu;
-        io.mem = mem;
+        io->cpu = (i8080_cpu<I8080> *)cpu;
+        io->mem = mem;
         cpu->SetMem(mem);
-        cpu->SetIO(&io);
+        cpu->SetIO(io);
         cpu->start();
         cpu->SetPC(0x100);
 
@@ -376,23 +237,22 @@ SUITE(CPU)
         cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
         CHECK_EQUAL (cpu->pc, 1u);
         delete cpu;
-        delete mem;
     }
 
-    TEST(CPU85Exer) {
+    TEST(CPU, CPU85Exer) {
         uint64_t  tim = 0;
         uint64_t   n_inst = 0;
         CPU<uint8_t>      *cpu;
-        bdos      io;
+        bdos      *io(new bdos());
         MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
         mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
 
         load_mem("8085EXER.COM", mem);
         cpu = new i8080_cpu<I8085>();
-        io.cpu = (i8080_cpu<I8080> *)cpu;
-        io.mem = mem;
+        io->cpu = (i8080_cpu<I8080> *)cpu;
+        io->mem = mem;
         cpu->SetMem(mem);
-        cpu->SetIO(&io);
+        cpu->SetIO(io);
         cpu->start();
         cpu->SetPC(0x100);
 
@@ -421,13 +281,100 @@ SUITE(CPU)
         cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
         CHECK_EQUAL (cpu->pc, 1u);
         delete cpu;
-        delete mem;
     }
-}
+
+    TEST(CPU, CPUTEST) {
+        uint64_t  tim = 0;
+        uint64_t  n_inst = 0;
+        CPU<uint8_t>      *cpu;
+        bdos      *io(new bdos());
+        MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
+        mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
+
+        load_mem("CPUTEST.COM", mem);
+        cpu = new i8080_cpu<I8080>();
+        io->cpu = (i8080_cpu<I8080> *)cpu;
+        io->mem = mem;
+        cpu->SetMem(mem);
+        cpu->SetIO(io);
+        cpu->start();
+        cpu->SetPC(0x100);
+
+        mem->write(0166, 0);    // Inject halt opcode.
+//        mem->write(0323, 5);  // Output
+//        mem->write(0001, 6);  // Not important.
+//        mem->write(0xc9, 7);  // return instruction.
+	for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
+	    mem->write(bdos_buffer[i], i+5);
+	}
+
+        auto start = chrono::high_resolution_clock::now();
+        while(cpu->running) {
+            //cpu->trace();
+            tim += cpu->step();
+            n_inst++;
+        }
+        cout << endl;
+        cpu->stop();
+        auto end = chrono::high_resolution_clock::now();
+        cout << "Simulated time: " << tim << endl;
+        cout << "Excuted: " << n_inst << endl;
+        auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
+        cout << "Time: " << ctim.count() << " ns" << endl;
+        cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
+        cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
+        CHECK_EQUAL (cpu->pc, 1u);
+        delete cpu;
+    }
+
+    TEST(CPU,TST8080) {
+        uint64_t  tim = 0;
+        uint64_t  n_inst = 0;
+        CPU<uint8_t>      *cpu;
+        bdos      *io(new bdos());
+        MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
+        RAM<uint8_t>  *ram(new RAM<uint8_t>(64 * 1024, 0));
+
+        cpu = new i8080_cpu<I8080>();
+        io->cpu = (i8080_cpu<I8080> *)cpu;
+        io->mem = mem;
+        cpu->SetMem(mem);
+	cpu->add_memory(ram);
+        load_mem("TST8080.COM", mem);
+        cpu->SetIO(io);
+        cpu->start();
+        cpu->SetPC(0x100);
+
+        mem->write(0166, 0);    // Inject halt opcode.
+//        mem->write(0323, 5);  // Output
+//        mem->write(0001, 6);  // Not important.
+//        mem->write(0xc9, 7);  // return instruction.
+	for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
+	    mem->write(bdos_buffer[i], i+5);
+	}
+
+        auto start = chrono::high_resolution_clock::now();
+        while(cpu->running) {
+    //        cpu->trace();
+            tim += cpu->step();
+            n_inst++;
+        }
+        cout << endl;
+        cpu->stop();
+        auto end = chrono::high_resolution_clock::now();
+        cout << "Simulated time: " << tim << endl;
+        cout << "Excuted: " << n_inst << endl;
+        auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
+        cout << "Time: " << ctim.count() << " ns" << endl;
+        cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
+        cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
+        CHECK_EQUAL (cpu->pc, 1u);
+        delete cpu;
+    }
 
 // run all tests
-int main([[maybe_unused]]int argc, [[maybe_unused]]char **argv)
+int main(int argc, char **argv)
 {
-    dir = argv[1];
-    return UnitTest::RunAllTests();
+    dir = ".";
+    return CommandLineTestRunner::RunAllTests(argc, argv);
 }

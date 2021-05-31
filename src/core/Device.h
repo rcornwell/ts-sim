@@ -32,12 +32,12 @@ public:
     virtual void examine() {}
     virtual void deposit() {}
     
-    virtual bool input(T &val, size_t port)
+    virtual bool input(T &val, [[maybe_unused]]size_t port)
     {
         val = 0;
         return false;
     }
-    virtual bool output(T val, size_t port)
+    virtual bool output([[maybe_unused]]T val, [[maybe_unused]]size_t port)
     {
         return false;
     }

@@ -36,38 +36,24 @@ public:
         data  = new T[size];
     }
 
-    virtual ~RAM()
+    virtual ~RAM() override
     {
         if (data)
             delete[] data;
- 
     }
 
     T        *data;
 
-    virtual void add_memory([[maybe_unused]]Memory<T> *mem) {}
-
-
-    virtual size_t GetSize()
+    virtual size_t GetSize() const override
     {
         return this->size;
     }
-
-//    virtual size_t GetBase()
-//    {
-//        return this->base;
-//    }
-//
-//    virtual void SetBase(size_t base)
-//    {
-//        this->base = base;
-//    }
 
     /**
      * @brief Return the value of the register.
      * @return T
      */
-    virtual bool read(T &val, size_t index)
+    virtual bool read(T &val, size_t index) override
     {
         if (index >= this->size) {
             val = 0;
@@ -82,7 +68,7 @@ public:
      * @param val
      */
 
-    virtual bool write(T val, size_t index)
+    virtual bool write(T val, size_t index) override
     {
         if (index >= this->size)
             return false;
@@ -91,103 +77,4 @@ public:
     };
 };
 
-//namespace emulator
-//{
-//
-//template <mem_width W>
-//class RAM : public Memory
-//{
-//public:
-//    RAM(size_t size, size_t base) : 
-//        Memory(size), base(base)
-//    {
-//        this->size = size;
-//        if constexpr (W == U8)
-//            data8  = new uint8_t[size];
-//        else if constexpr (W == U16)
-//            data16 = new uint16_t[size]; 
-//        else if constexpr (W == U32)
-//            data32 = new uint32_t[size];
-//        else 
-//            data64 = new uint64_t[size];
-//        }
-//    }
-//
-//    virtual ~RAM()
-//    {
-//        if (data8)
-//            delete[] data8;
-//        if (data16)
-//            delete[] data16;
-//        if (data32)
-//            delete[] data32;
-//        if (data64)
-//            delete[] data64;
-//    }
-//
-//    size_t    base;
-//    uint8_t  *data8;
-//    uint16_t *data16;
-//    uint32_t *data32;
-//    uint64_t *data64;
-//
-//    virtual void add_memory(Memory *mem) {}
-//
-//
-//    virtual size_t GetSize()
-//    {
-//        return this->size;
-//    }
-//
-//    virtual size_t GetBase()
-//    {
-//        return base;
-//    }
-//
-//    virtual void SetBase(size_t base)
-//    {
-//        this->base = base;
-//    }
-//
-//    /**
-//     * @brief Return the value of the register.
-//     * @return T
-//     */
-//    virtual bool read(uint64_t &val, size_t index)
-//    {
-//        if (index >= this->size) {
-//            val = 0;
-//            return false;
-//        }
-//        if constexpr (W == U8)
-//            val = data8[index];
-//        else if constexpr (W == U16)
-//            val = data16[index];
-//        else if constexpr (W == U32)
-//            val = data32[index];
-//        else 
-//            val = data64[index];
-//        return true;
-//    };
-//
-//    /**
-//     * @brief Set the value of a register to the argument.
-//     * @param val
-//     */
-//
-//    virtual bool write(uint64_t val, size_t index)
-//    {
-//        if (index >= this->size)
-//            return false;
-//        if constexpr (W == U8)
-//            data8[index] = val;
-//        else if constexpr (W == U16)
-//            data16[index] = val;
-//        else if constexpr (W == U32)
-//            data32[index] = val;
-//        else 
-//            data64[index] = val;
-//        return true;
-//    };
-//};
 }

@@ -217,6 +217,8 @@ public:
     }
     virtual ~MemFixed()
     {
+	if (mem != nullptr)
+            delete mem;
     }
 
     /**
@@ -232,8 +234,10 @@ public:
      * @brief Sets the memory that this controller will access.
      * @param mem New memory module.
      */
-    virtual void add_memory(Memory<T> *mem)
+    virtual void add_memory(Memory<T> *mem) override
     {
+	if (this->mem != nullptr)
+            delete this->mem;
         this->mem = mem;
         // Update base and size from module.
         this->size = mem->GetSize();
@@ -248,7 +252,7 @@ public:
      * @return true if access succeeded, false if out of range.
      */
     virtual
-    bool read(T& val, size_t index)
+    bool read(T& val, size_t index) override
     {
         if (index >= this->base && mem != nullptr)
             return mem->read(val, index - this->base);
@@ -264,7 +268,7 @@ public:
     * @return true if access succeeded, false if out of range.
     */
     virtual
-    bool write(T val, size_t index)
+    bool write(T val, size_t index) override
     {
         if (index < this->base)
             return false;
@@ -369,7 +373,7 @@ public:
     * @return true if access succeeded, false if out of range.
     */
     virtual
-    bool read(T& val, size_t index)
+    bool read(T& val, size_t index) override
     {
         // Compute bin address is located in.
         size_t b = index >> shift;
@@ -389,7 +393,7 @@ public:
     * @return true if access succeeded, false if out of range.
     */
     virtual
-    bool write(T val, size_t index)
+    bool write(T val, size_t index) override
     {
         size_t b = index >> shift;
         if (index < this->size) // && mem[b] != nullptr)

@@ -62,7 +62,10 @@ public:
         pc = 0;
     };
 
-    virtual ~CPU() {};
+    virtual ~CPU() {
+	delete mem;
+	delete io;
+    };
     
     CPU(const CPU&) = delete;
 
@@ -111,6 +114,8 @@ public:
     virtual
     CPU& SetMem(Memory<T>* mem)
     {
+	if (this->mem != nullptr)
+	    delete this->mem;
         this->mem = mem;
         return *this;
     }

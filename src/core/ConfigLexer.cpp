@@ -206,7 +206,7 @@ ConfigToken ConfigLexer::get_token(bool keyword)
         // Convert the number based on base given to a value.
         value = 0;
         for (auto &ch : buffer) {
-            static const string hexChars = "0123456789abcdef";
+            const string hexChars = "0123456789abcdef";
             const size_t pos = hexChars.find(ch);
             if (pos == string::npos)
                 throw Lexical_error{"Invalid digit: " + ch};

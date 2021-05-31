@@ -6,6 +6,7 @@ project(${PROJECT_NAME} VERSION 0.0.0
 
 # Generate Doxygen documentation files
 option(BUILD_DOC "Build documenation" ON)
+option(RUN_TESTS "Run tests" ON)
 
 if (BUILD_DOC)
     find_package(Doxygen REQUIRED)
@@ -30,7 +31,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules
 ENABLE_TESTING()
 
 set(CMAKE_CXX_STANDARD 17)
-set(UnitTest++_DIR "/usr/include/UnitTest++")
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -46,17 +46,34 @@ FILE(GLOB I8080_SRCS "src/i8080/i8080_system.cpp" "src/i8080/i8080_cpu.cpp")
 
 ## Define the executable
 add_executable(i8080 ${I8080_SRCS} src/i8080/main.cpp)
-add_executable(i8080_test ${I8080_SRCS} src/i8080/test/main.cpp)
-add_test(NAME i8080_test COMMAND i8080_test ../src/i8080/test)
-add_custom_command(TARGET i8080_test POST_BUILD 
-	COMMAND i8080_test ../src/i8080/test
-	COMMENT "Running i8080 test" VERBATIM)
+if (RUN_TESTS) 
+# Find CppUTest.
+if(DEFINED ENV{CPPUTEST_HOME})
+    message(STATUS "Using CppUTest home: $ENV{CPPUTEST_HOME}")
+    set(CPPUTEST_INCLUDE_DIRS $ENV{CPPUTEST_HOME}/include)
+    set(CPPUTEST_LIBRARIES $ENV{CPPUTEST_HOME}/lib)
+    set(CPPUTEST_LDFLAGS CppUTest CppUTestExt)
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_search_module(CPPUTEST REQUIRED cpputest>=3.8)
+    message(STATUS "Found CppUTest version ${CPPUTEST_VERSION}")
+endif()
 
-add_dependencies(i8080_test core_test)
-#add_dependencies(i8080 corelib)
-target_link_libraries(i8080_test UnitTest++)
-target_link_libraries(i8080_test corelib)
-target_link_libraries(i8080 corelib)
+
+add_executable(i8080_test ${I8080_SRCS} src/i8080/test/main.cpp)
 target_include_directories(i8080_test PRIVATE "src/i8080")
-target_include_directories(i8080_test PRIVATE ${UnitTest++_DIR})
+target_include_directories(i8080_test PRIVATE ${CPPUTEST_INCLUDE_DIRS})
+add_dependencies(i8080_test core_test)
+add_test(NAME i8080_test COMMAND i8080_test ../src/i8080/test)
+target_link_libraries(i8080_test corelib)
+target_link_libraries(i8080_test ${CPPUTEST_LIBRARIES})
+target_link_libraries(i8080_test ${CPPUTEST_LDFLAGS})
+add_custom_command(TARGET i8080_test POST_BUILD 
+	COMMAND i8080_test
+        WORKING_DIRECTORY ../src/i8080/test
+	COMMENT "Running i8080 test" VERBATIM)
+endif()
+
+#add_dependencies(i8080 corelib)
+target_link_libraries(i8080 corelib)
 

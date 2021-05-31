@@ -15,15 +15,25 @@ add_library(corelib STATIC ${CORE_SRC})
 target_include_directories(corelib PUBLIC ${CORE_PATH})
 
 # include core_test programs to run.
-add_executable(core_test core_test/main.cpp)
-target_link_libraries(core_test corelib)
-target_link_libraries(core_test UnitTest++)
-target_include_directories(core_test PRIVATE ${UnitTest++_DIR})
-add_test(NAME core_test COMMAND core_test)
-add_custom_command(TARGET core_test POST_BUILD
-       COMMAND core_test 
-       COMMENT "Running core test" VERBATIM)
+add_subdirectory(core_test)
+#add_executable(core_test core_test/main.cpp)
+#target_link_libraries(core_test corelib)
+#target_link_libraries(core_test UnitTest++)
+#target_include_directories(core_test PRIVATE ${UnitTest++_DIR})
+#add_test(NAME core_test COMMAND core_test)
+#add_custom_command(TARGET core_test POST_BUILD
+#       COMMAND core_test 
+#       COMMENT "Running core test" VERBATIM)
 
+# include core_test programs to run.
+#add_executable(opt_test core_test/opt-test.cpp)
+#target_link_libraries(opt_test corelib)
+#target_link_libraries(opt_test UnitTest++)
+#target_include_directories(opt_test PRIVATE ${UnitTest++_DIR})
+#add_test(NAME opt_test COMMAND opt_test)
+#add_custom_command(TARGET opt_test POST_BUILD
+#       COMMAND opt_test 
+#       COMMENT "Running option test" VERBATIM)
 project(cppcheck-analysis)
 
 #set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "")
