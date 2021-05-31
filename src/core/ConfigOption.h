@@ -179,8 +179,8 @@ public:
         ConfigValue<T>(name, description)
     {
         assign_to_ = assign_to;
-        setDefault(default_val);
         is_set_ = false;
+        setDefault(default_val);
     }
 
     /**
@@ -312,7 +312,7 @@ protected:
     /**
      * @brief Current value of option.
      */
-    T  value_;
+    T  value_{};
 
     /**
      * @brief flag to indicate that option has been set.

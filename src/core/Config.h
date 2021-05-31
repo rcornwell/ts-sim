@@ -65,7 +65,7 @@ namespace core {
 class Config
 {
 public:
-    Config() : sys(nullptr)
+    Config() : sys(nullptr), p_lexer(nullptr)
     {
     }
     

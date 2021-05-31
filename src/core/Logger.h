@@ -1,11 +1,34 @@
+/*
+ * Author:      Richard Cornwell (rich@sky-visions.com)
+ *
+ * Copyright (C) 2021 Richard Cornwell.
+ *
+ * This file may be distributed under the terms of the Q Public License
+ * as defined by Trolltech AS of Norway and appearing in the file
+ * LICENSE.QPL included in the packaging of this file.
+ *
+ * THIS FILE IS PROVIDED AS IS WITH NO WARRANTY OF ANY KIND, INCLUDING
+ * THE WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL,
+ * INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING
+ * FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ */
+
 #pragma once
+#include <assert.h>
 #include <string>
 #include <chrono>
 #include <array>
 #include <ctime>
 #include <ostream>
+#include <functional>
 #include <memory>
 #include <mutex>
+#include <thread>
+#include <iomanip>
 
 #if (defined(__linux) || defined(__linux__))
 #include <syslog.h>
@@ -32,7 +55,7 @@ struct Message {
     const std::string msg_;
     const std::chrono::system_clock::time_point when_ = std::chrono::system_clock::now();
     const LogLevel level_;
-}
+};
 
 class LogHandler
 {
@@ -53,14 +76,12 @@ public:
     void PrintMessage(std::ostream& out, const Message& msg)
     {
         auto tt = std::chrono::system_clock::to_time_t(msg.when_);
-auto when_rounded = std::chrono:
-                            system_clock::from_time_t(tt);
+        auto when_rounded = std::chrono::system_clock::from_time_t(tt);
         if (when_rounded > msg.when_) {
-            -tt;
+            tt--;
             when_rounded -= std::chrono::seconds(1);
         }
         if (const auto tm = std::localtime(&tt)) {
-            const int ms = std::chrono::duration_cast<std::chrono::duration<int, std::milli>> (msg.when_ - when_rounded).count();
             out << std::put_time(tm, "%Y-%m-%d %H:%M:%S.");
         } else {
             out << "0000-00-00 00:00:00";
@@ -83,7 +104,7 @@ auto when_rounded = std::chrono:
                  || (*p == '\\')
 #endif
                 ) && p[1]) {
-                if (seperators.size() > LOG_LEVELS) {
+                if (seperators.size() > _LOG_LOCATION_LEVELS) {
                     seperators.erase(seperators.begin());
                 }
                 seperators.push_back(p + 1);
@@ -93,12 +114,12 @@ auto when_rounded = std::chrono:
     }
 };
 
-class StreamHandler :: LogHandler
+class StreamHandler : LogHandler
 {
 public:
     StreamHandler(std::ostream& out, LogLevel level) : LogHandler(level), out_(out) {}
     StreamHandler(std::string& path, LogLevel level) :
-        LogHandler(level), file_(new std::ofstream(path, std::ios::app)), out_(*file) {}
+        LogHandler(level), file_{new std::ofstream(path, std::ios::app)}, out_(*file_) {}
 
     void LogMessage(const Message &msg) override
     {
@@ -108,7 +129,7 @@ public:
 private:
     std::unique_ptr<std::ostream> file_;
     std::ostream& out_;
-}
+};
 
 class ProxyHandler : public LogHandler
 {
@@ -125,7 +146,7 @@ public:
     }
 private:
     const fn_t fn_;
-}
+};
 
 
 #ifdef _LOG_USE_SYSLOG
@@ -144,11 +165,10 @@ public:
     void LogMessage(const Message& msg) override
     {
         static const std::array<int, 6> syslog_priority =
-        {{ "FATAL", "ERROR", "WARN", "NOTICE", "INFO", "DEBUG" }};
         {
             LOG_CRIT, LOG_ERR, LOG_WARNING, LOG_NOTICE, LOG_INFO, LOG_DEBUG
         };
-        syslog(syslog_priority.at(static_cast<int>(level_)), "%s", msg.msg_.c_str())
+        syslog(syslog_priority.at(static_cast<int>(level_)), "%s", msg.msg_.c_str());
     }
 };
 #endif
@@ -203,14 +223,14 @@ class LogManager
 public:
     static LogManager& Instance()
     {
-        static Logmanager instance;
+        static LogManager instance;
         return instance;
     }
 
-    void LogManager(Message message)
+    void LogMessage(Message message)
     {
         std::lock_guard<std::mutex> lock{mutex_};
-        for (const auto& h : handler_) {
+        for (const auto& h : handlers_) {
             if (h->level_ >= message.level_) {
                 h->LogMessage(message);
             }
@@ -253,7 +273,7 @@ private:
     std::vector<LogHandler::ptr_t> handlers_;
     std::mutex mutex_;
     LogLevel level_ = LogLevel::ERROR;
-}
+};
 
 class Log
 {
@@ -269,7 +289,7 @@ public:
 
     std::ostringstream& Line()
     {
-        return out;
+        return out_;
     }
 
 private:

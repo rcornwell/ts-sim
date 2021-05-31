@@ -40,8 +40,6 @@ enum errors {
     ILL_INS,
 };
 
-using namespace std;
-
 /**
  * @class CPU
  * @author rich
@@ -56,29 +54,37 @@ class CPU
 {
 public:
 
-    CPU() {};
+    CPU() 
+    {
+        mem = nullptr;
+        io = nullptr;
+        running = false;
+        pc = 0;
+    };
 
     virtual ~CPU() {};
+    
+    CPU(const CPU&) = delete;
 
-    virtual auto getType() const -> string
+    virtual auto getType() const -> std::string
     {
         return "CPU";
     }
 
     void showModel()
     {
-        cout << "CPU model = " << this->getType() << endl;
+        std::cout << "CPU model = " << this->getType() << std::endl;
     }
     
-    string name;
+    std::string name;
     
-    CPU& SetName(const string& name)
+    CPU& SetName(const std::string& name)
     {
         this->name = name;
         return *this;
     }
     
-    const string& GetName() const
+    const std::string& GetName() const
     {
         return name;
     }

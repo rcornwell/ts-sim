@@ -113,7 +113,7 @@ public:
     virtual void add_memory([[maybe_unused]]Memory *mem) {};
 
     /**
-     * @brief Adds options to this memory module.
+     * @brief Adds options to this CPU module.
      * @return Option parser.
      */
     virtual
@@ -275,7 +275,6 @@ public:
      *  Pointer to memory device that holds actual values.
      */
     Memory<T> *mem;
-
 };
 
 
@@ -301,6 +300,7 @@ public:
     MemArray(const size_t size, const size_t chunk_size = 4096)
         : Memory<T>(size)
     {
+        empty = new MemEmpty<T>(size);
         this->size = size;
         // Make sure power of two.
         if ((chunk_size & (chunk_size - 1)) != 0)
@@ -312,12 +312,13 @@ public:
         // Allocate and initialize the memory.
         mem = new Memory<T> *[num];
         for (size_t i = 0; i < num; i++) {
-            mem[i] = nullptr;
+            mem[i] = empty;
         }
     }
 
     virtual ~MemArray()
     {
+        delete   empty;
         delete[] mem;
     }
 
@@ -374,7 +375,7 @@ public:
         size_t b = index >> shift;
 
         // Make sure in range and access it.
-        if (index < this->size && mem[b] != nullptr)
+        if (index < this->size) //&& mem[b] != nullptr)
             return mem[b]->read(val, index - mem[b]->GetBase());
         val = 0;
         return false;
@@ -391,7 +392,7 @@ public:
     bool write(T val, size_t index)
     {
         size_t b = index >> shift;
-        if (index < this->size && mem[b] != nullptr)
+        if (index < this->size) // && mem[b] != nullptr)
             return mem[b]->write(val, index - mem[b]->GetBase());
         return false;
     };
@@ -404,8 +405,9 @@ public:
     /**
      * @brief Array of memory pointers.
      */
-    // std::vector<Memory<T> *>   mem;
-    Memory<T> *mem[];
+
+    Memory<T> *empty;
+    Memory<T> **mem;
 };
 }
 

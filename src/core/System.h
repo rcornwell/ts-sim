@@ -74,7 +74,10 @@ public:
     System() {
  
         };
+        
     virtual ~System() {};
+    
+    System(const System&) = delete;
     
  
     virtual auto getType() const -> std::string

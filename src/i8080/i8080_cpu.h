@@ -24,6 +24,7 @@
 #include <stdint.h>
 #include "CPU.h"
 #include "Memory.h"
+#include "ConfigOption.h"
 #include "i8080_system.h"
 
 
@@ -72,7 +73,6 @@ public:
     }
 
 
-    //uint16_t  pc;
     uint16_t  sp;
     bool      ie;
 
@@ -80,7 +80,15 @@ public:
     uint8_t   PSW;
 
     int       cycle_time;
+    int       page_size;
 
+    virtual
+    core::ConfigOptionParser options() override {
+        core::ConfigOptionParser option("CPU options");
+        auto page_opt = option.add<core::ConfigValue<int>>("pagesize", "address spacing", 0, &page_size);
+        return option;
+    }
+    
 #define Tc 250
     int   ins_time[256] = {
         /*   0     1     2     3     4     5     6     7 */
@@ -381,7 +389,12 @@ public:
 
     void decode(uint8_t op);
 
-    void init() {};
+    virtual void init() override
+    {
+        Memory<uint8_t> *memctl{new MemArray<uint8_t>((size_t)(64*1024), (size_t)page_size)};
+        SetMem(memctl);
+        SetIO(new IO_map<uint8_t>(256u));
+    };
 
     void shutdown() {};
 

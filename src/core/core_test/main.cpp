@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <vector>
 #include <map>
+#include "Logger.h"
 #include "Options.h"
 #include "System.h"
 #include "CPU.h"
@@ -139,6 +140,8 @@ class test_cpu : public CPU<uint32_t>
 public:
     test_cpu() 
     {
+        timer = false;
+        home = 0;
     }
     
     virtual ~test_cpu()

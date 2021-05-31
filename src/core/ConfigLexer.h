@@ -101,8 +101,8 @@ private:
     std::istream * p_input;
     bool owns_input;
 
-    ConfigToken cur_token;
-    std::string cur_token_text;
+    ConfigToken cur_token{};
+    std::string cur_token_text{};
     uint64_t  cur_token_value;
 
     void init();

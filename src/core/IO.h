@@ -24,6 +24,7 @@
 #include <variant>
 #include <string>
 #include <map>
+#include "Device.h"
 
 namespace emulator
 {
@@ -35,13 +36,19 @@ namespace emulator
  * @file IO.h
  * @brief
  */
- 
+
 
 template<typename T>
 class IO
 {
 public:
+    IO()
+    {
+    }
 
+    virtual ~IO()
+    {
+    }
 
     virtual void init() {};
     virtual void shutdown() {};
@@ -50,9 +57,23 @@ public:
     virtual void stop() {};
     virtual void step() {};
     virtual void run() {};
-    
-    virtual bool input(T &val, size_t port);
-    virtual bool output(T val, size_t port);
+
+    virtual bool input(T &val, [[maybe_unused]]size_t port)
+    {
+        val = 0;
+        return false;
+    }
+    virtual bool output([[maybe_unused]]T val, [[maybe_unused]]size_t port)
+    {
+        return false;
+    }
+
+    virtual
+    core::ConfigOptionParser options()
+    {
+        core::ConfigOptionParser option("IO Options");
+        return option;
+    }
 
 private:
 
@@ -75,10 +96,10 @@ private:
     }; \
     static model##IOFactory global_##model##IOFactory; \
     };
-    
+
 #define REGISTER_SYSTEM_TEMPLATE_IO \
-public: \
-     static void registerIO(const string & name, core::IOFactory *factory) \
+    public: \
+    static void registerIO(const string & name, core::IOFactory *factory) \
     { io_factories.insert(make_pair(name, factory)); } \
     IO_v create_io(const string &model) \
     { \
@@ -86,9 +107,9 @@ public: \
             throw core::SystemError{"Unknown io type: " + model}; \
         return io_factories[model]->create(); \
     } \
-private: \
-     static map<string, core::IOFactory *> io_factories; \
-public:
+    private: \
+    static map<string, core::IOFactory *> io_factories; \
+    public:
 
 #define REGISTER_IO_FIXED(systype) \
     namespace core { \
@@ -105,19 +126,69 @@ public:
     }; \
     static systype##IOFactory global_##systype##IOFactory; \
     };
-    
 
-namespace core {
-    
+
+namespace core
+{
+
 using IO_v = std::variant<std::shared_ptr<emulator::IO<uint8_t>>,
-             std::shared_ptr<emulator::IO<uint16_t>>, 
-             std::shared_ptr<emulator::IO<uint32_t>>,
-             std::shared_ptr<emulator::IO<uint64_t>>>;
-    
+      std::shared_ptr<emulator::IO<uint16_t>>,
+      std::shared_ptr<emulator::IO<uint32_t>>,
+      std::shared_ptr<emulator::IO<uint64_t>>>;
+
 class IOFactory
 {
 public:
     virtual IO_v create() = 0;
 };
+}
 
+namespace emulator
+{
+
+template<typename T>
+class IO_map : public IO<T>
+{
+public:
+    IO_map(const size_t num_devices) : ndevices(num_devices)
+    {
+        nuldev = new Device<T>();
+        devices = new Device<T> *[ndevices];
+        for (size_t i = 0; i < num_devices; i++)
+            devices[i] = nuldev;
+    }
+
+    virtual ~IO_map()
+    {
+        delete[] devices;
+        delete nuldev;
+    }
+
+    virtual void init() {};
+    virtual void shutdown() {};
+    virtual void start() {};
+    virtual void reset() {};
+    virtual void stop() {};
+    virtual void step() {};
+    virtual void run() {};
+
+    virtual bool input(T &val, size_t port)
+    {
+        if (port > ndevices)
+            return false;
+        return devices[port]->input(val, port);
+    }
+
+    virtual bool output(T val, size_t port)
+    {
+        if (port > ndevices)
+            return false;
+        return devices[port]->output(val, port);
+    }
+
+private:
+    size_t ndevices;
+    Device<T> *nuldev;
+    Device<T> **devices;
+};
 }

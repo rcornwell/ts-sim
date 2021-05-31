@@ -41,7 +41,7 @@ vector<Keyword> Keywords = {
  * @param is
  */
 ConfigLexer::ConfigLexer(std::istream& is)
-    : p_input{&is}, owns_input{false}
+    : p_input{&is}, owns_input{false}, cur_token_value{0}, value{0}
 {
     init();
 }
@@ -51,7 +51,7 @@ ConfigLexer::ConfigLexer(std::istream& is)
  * @param ps
  */
 ConfigLexer::ConfigLexer(std::istream *ps)
-    : p_input{ps}, owns_input{true}
+    : p_input{ps}, owns_input{true}, cur_token_value{0}, value{0}
 {
     init();
 }
@@ -93,6 +93,7 @@ ConfigToken ConfigLexer::get_token(bool keyword)
 {
     std::istream& input = *p_input;
     buffer.clear();
+    value = 0;
     char c = input.get();
 
     // Skip end leading white space.
