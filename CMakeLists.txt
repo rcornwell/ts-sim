@@ -24,6 +24,24 @@ if (BUILD_DOC)
     endif()
 endif()
 
+if (RUN_TESTS) 
+# Find CppUTest.
+if(CPPUTEST_HOME)
+    set(CPPUTEST_INCLUDE_DIRS ${CPPUTEST_HOME}/include)
+    set(CPPUTEST_LIBRARIES -L${CPPUTEST_HOME}/lib)
+    set(CPPUTEST_LDFLAGS CppUTest CppUTestExt)
+elseif(DEFINED ENV{CPPUTEST_HOME})
+    message(STATUS "Using CppUTest home: $ENV{CPPUTEST_HOME}")
+    set(CPPUTEST_INCLUDE_DIRS $ENV{CPPUTEST_HOME}/include)
+    set(CPPUTEST_LIBRARIES -L$ENV{CPPUTEST_HOME}/lib)
+    set(CPPUTEST_LDFLAGS CppUTest CppUTestExt)
+else()
+    find_package(PkgConfig REQUIRED)
+    pkg_search_module(CPPUTEST REQUIRED cpputest>=3.8)
+    message(STATUS "Found CppUTest version ${CPPUTEST_VERSION}")
+endif()
+endif()
+
 # Add a custom CMake Modules directory
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules
                       ${CMAKE_MODULE_PATH})
@@ -45,21 +63,11 @@ add_subdirectory(src/core)
 FILE(GLOB I8080_SRCS "src/i8080/i8080_system.cpp" "src/i8080/i8080_cpu.cpp")
 
 ## Define the executable
+#add_dependencies(i8080 corelib)
 add_executable(i8080 ${I8080_SRCS} src/i8080/main.cpp)
+target_link_libraries(i8080 corelib)
+
 if (RUN_TESTS) 
-# Find CppUTest.
-if(DEFINED ENV{CPPUTEST_HOME})
-    message(STATUS "Using CppUTest home: $ENV{CPPUTEST_HOME}")
-    set(CPPUTEST_INCLUDE_DIRS $ENV{CPPUTEST_HOME}/include)
-    set(CPPUTEST_LIBRARIES $ENV{CPPUTEST_HOME}/lib)
-    set(CPPUTEST_LDFLAGS CppUTest CppUTestExt)
-else()
-    find_package(PkgConfig REQUIRED)
-    pkg_search_module(CPPUTEST REQUIRED cpputest>=3.8)
-    message(STATUS "Found CppUTest version ${CPPUTEST_VERSION}")
-endif()
-
-
 add_executable(i8080_test ${I8080_SRCS} src/i8080/test/main.cpp)
 target_include_directories(i8080_test PRIVATE "src/i8080")
 target_include_directories(i8080_test PRIVATE ${CPPUTEST_INCLUDE_DIRS})
@@ -74,6 +82,4 @@ add_custom_command(TARGET i8080_test POST_BUILD
 	COMMENT "Running i8080 test" VERBATIM)
 endif()
 
-#add_dependencies(i8080 corelib)
-target_link_libraries(i8080 corelib)
 
