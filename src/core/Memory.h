@@ -19,14 +19,20 @@
 
 #pragma once
 
+#include "config.h"
 #include <vector>
 #include <variant>
 #include <string>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
+#include "SimError.h"
 #include "ConfigOption.h"
 
 namespace emulator
 {
+
+    using Access_error = core::SimError<4>;
 
 /**
  * @class Memory
@@ -48,9 +54,9 @@ public:
      */
     Memory(const size_t size)
     {
-        this->tot_size = size;
-        this->size = size;
-        this->base = 0;
+        tot_size_ = size;
+        size_ = size;
+        base_ = 0;
     }
 
     virtual ~Memory()
@@ -64,7 +70,7 @@ public:
      */
     Memory& SetName(const std::string& name)
     {
-        this->name = name;
+        name_ = name;
         return *this;
     }
 
@@ -74,7 +80,7 @@ public:
      */
     const std::string& GetName() const
     {
-        return name;
+        return name_;
     }
 
     /**
@@ -83,7 +89,7 @@ public:
       */
     virtual size_t GetSize() const
     {
-        return tot_size;
+        return tot_size_;
     }
 
     /**
@@ -92,7 +98,7 @@ public:
       */
     virtual size_t GetBase() const
     {
-        return base;
+        return base_;
     }
 
     /**
@@ -101,7 +107,7 @@ public:
      */
     virtual void SetBase(size_t base)
     {
-        this->base = base;
+        base_ = base;
     }
 
     /**
@@ -120,10 +126,31 @@ public:
     core::ConfigOptionParser options()
     {
         core::ConfigOptionParser option("Memory options");
-        auto base_opt = option.add<core::ConfigValue<size_t>>("base", "Base location of memory", 0, &this->base);
+        auto base_opt = option.add<core::ConfigValue<size_t>>("base", 
+                    "Base location of memory", 0, &base_);
         return option;
     }
+    
+    /**
+     * @brief Retrieve a value from memory or throw exception if no location.
+     * @param val returned value.
+     * @param index location to access.
+     */
+    virtual void Get([[maybe_unused]]T &val, [[maybe_unused]]size_t index)
+    {
+        throw Access_error{"Invalid memory location"};
+    }
 
+    /**
+     * @brief Set memory to a value or throw exception if no location.
+     * @param val returned value.
+     * @param index location to access.
+     */
+    virtual void Set([[maybe_unused]]T val, [[maybe_unused]]size_t index)
+    {
+        throw Access_error{"Invalid memory location"};
+    }
+    
     /**
      * @brief Return the value of the memory at index
      * @param val - reference to result of memory access.
@@ -150,22 +177,22 @@ public:
     /**
      * @brief Total amount of memory in system.
      */
-    size_t tot_size;
+    size_t tot_size_;
 
     /**
      * @brief Size of this memory module.
      */
-    size_t size;
+    size_t size_;
 
     /**
      * @brief First address of memory module.
      */
-    size_t base;
+    size_t base_;
 
     /**
      * @brief Name of this memory module.
      */
-    std::string name;
+    std::string name_;
 };
 
 /**
@@ -213,12 +240,12 @@ public:
      */
     MemFixed(const size_t size) : Memory<T>(size)
     {
-        mem = nullptr;
+        mem_ = nullptr;
     }
     virtual ~MemFixed()
     {
-	if (mem != nullptr)
-            delete mem;
+	if (mem_ != nullptr)
+            delete mem_;
     }
 
     /**
@@ -227,7 +254,7 @@ public:
      */
     virtual size_t GetSize() const override
     {
-        return this->size;
+        return this->size_;
     }
 
     /**
@@ -236,14 +263,40 @@ public:
      */
     virtual void add_memory(Memory<T> *mem) override
     {
-	if (this->mem != nullptr)
-            delete this->mem;
-        this->mem = mem;
+	if (mem_ != nullptr)
+            delete mem_;
+        mem_ = mem;
         // Update base and size from module.
-        this->size = mem->GetSize();
-        this->base = mem->GetBase();
+        this->size_ = mem_->GetSize();
+        this->base_ = mem_->GetBase();
     }
 
+    /**
+     * @brief Retrieve a value from memory or throw exception if no location.
+     * @param val returned value.
+     * @param index location to access.
+     */
+    virtual void Get(T &val, size_t index) override
+    {
+        if (index >= this->base_ && mem_ != nullptr)
+            mem_->Get(val, index - this->base_);
+        else
+            throw Access_error{"Invalid memory location"};
+    }
+
+    /**
+     * @brief Set memory to a value or throw exception if no location.
+     * @param val returned value.
+     * @param index location to access.
+     */
+    virtual void Set(T val, size_t index) override
+    {
+        if (index >= this->base_ && mem_ != nullptr)
+            mem_->Set(val, index - this->base_);
+        else
+            throw Access_error{"Invalid memory location"};
+    }
+    
     /**
      * @brief Read the memory at location index. Returns false if access
      *      outsize or range, or if no memory object.
@@ -254,8 +307,8 @@ public:
     virtual
     bool read(T& val, size_t index) override
     {
-        if (index >= this->base && mem != nullptr)
-            return mem->read(val, index - this->base);
+        if (index >= this->base_ && mem_ != nullptr)
+            return mem_->read(val, index - this->base_);
         val = 0;
         return false;
     };
@@ -270,15 +323,15 @@ public:
     virtual
     bool write(T val, size_t index) override
     {
-        if (index < this->base)
+        if (index < this->base_)
             return false;
-        return mem->write(val, index - this->base);
+        return mem_->write(val, index - this->base_);
     };
 
     /**
      *  Pointer to memory device that holds actual values.
      */
-    Memory<T> *mem;
+    Memory<T> *mem_;
 };
 
 
@@ -304,26 +357,26 @@ public:
     MemArray(const size_t size, const size_t chunk_size = 4096)
         : Memory<T>(size)
     {
-        empty = new MemEmpty<T>(size);
-        this->size = size;
+        empty_ = new MemEmpty<T>(size);
+        this->size_ = size;
         // Make sure power of two.
         if ((chunk_size & (chunk_size - 1)) != 0)
             throw;
         // Figure out how many chucks we need.
         size_t num = size / chunk_size;
         // Compute index shift.
-        for(shift = 0; chunk_size != (1u << shift); shift++);
+        for(shift_ = 0; chunk_size != (1u << shift_); shift_++);
         // Allocate and initialize the memory.
-        mem = new Memory<T> *[num];
+        mem_ = new Memory<T> *[num];
         for (size_t i = 0; i < num; i++) {
-            mem[i] = empty;
+            mem_[i] = empty_;
         }
     }
 
     virtual ~MemArray()
     {
-        delete   empty;
-        delete[] mem;
+        delete   empty_;
+        delete[] mem_;
     }
 
     /**
@@ -332,7 +385,7 @@ public:
      */
     virtual size_t GetSize() const override
     {
-        return this->size;
+        return this->size_;
     }
 
     /**
@@ -358,11 +411,42 @@ public:
      */
     virtual void add_memory(Memory<T> *mem) override
     {
-        size_t b = mem->GetBase() >> shift;
-        size_t t = (mem->GetSize() >> shift) + b;
+        size_t b = mem->GetBase() >> shift_;
+        size_t t = (mem->GetSize() >> shift_) + b;
         for (size_t i = b; i < t; i++) {
-            this->mem[i] = mem;
+            mem_[i] = mem;
         }
+    }
+    
+    /**
+     * @brief Retrieve a value from memory or throw exception if no location.
+     * @param val returned value.
+     * @param index location to access.
+     */
+    virtual void Get(T &val, size_t index) override
+    {
+         // Compute bin address is located in.
+        size_t b = index >> shift_;
+
+        // Make sure in range and access it.
+        if (index < this->size_) 
+            mem_[b]->Get(val, index - mem_[b]->GetBase());
+        else
+            throw Access_error{"Invalid memory location"};
+    }
+
+    /**
+     * @brief Set memory to a value or throw exception if no location.
+     * @param val returned value.
+     * @param index location to access.
+     */
+    virtual void Set(T val, size_t index) override
+    {
+       size_t b = index >> shift_;
+        if (index < this->size_)
+            return mem_[b]->Set(val, index - mem_[b]->GetBase());
+        else
+            throw Access_error{"Invalid memory location"};
     }
 
     /**
@@ -376,11 +460,11 @@ public:
     bool read(T& val, size_t index) override
     {
         // Compute bin address is located in.
-        size_t b = index >> shift;
+        size_t b = index >> shift_;
 
         // Make sure in range and access it.
-        if (index < this->size) //&& mem[b] != nullptr)
-            return mem[b]->read(val, index - mem[b]->GetBase());
+        if (index < this->size_) 
+            return mem_[b]->read(val, index - mem_[b]->GetBase());
         val = 0;
         return false;
     };
@@ -395,23 +479,23 @@ public:
     virtual
     bool write(T val, size_t index) override
     {
-        size_t b = index >> shift;
-        if (index < this->size) // && mem[b] != nullptr)
-            return mem[b]->write(val, index - mem[b]->GetBase());
+        size_t b = index >> shift_;
+        if (index < this->size_)
+            return mem_[b]->write(val, index - mem_[b]->GetBase());
         return false;
     };
 
     /**
      * @brief shift factor for determining bin.
      */
-    size_t      shift;
+    size_t      shift_;
 
     /**
      * @brief Array of memory pointers.
      */
 
-    Memory<T> *empty;
-    Memory<T> **mem;
+    Memory<T> *empty_;
+    Memory<T> **mem_;
 };
 }
 

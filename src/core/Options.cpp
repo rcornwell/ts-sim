@@ -22,6 +22,7 @@
  * has been changed to reduce number of type of options.
  */
 
+#include <algorithm>
 #include "Options.h"
 
 namespace option

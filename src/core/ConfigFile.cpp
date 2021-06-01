@@ -25,7 +25,7 @@
 #include "SimError.h"
 #include "ConfigLexer.h"
 #include "ConfigOption.h"
-#include "Config.h"
+#include "ConfigFile.h"
 
 namespace core
 {

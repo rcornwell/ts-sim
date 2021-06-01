@@ -17,15 +17,14 @@
  *
  */
 
-#include "CppUTest/TestHarness.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <vector>
 #include "ConfigLexer.h"
+#include "CppUTest/TestHarness.h"
 
 TEST_GROUP(ConfigLexer)
 {

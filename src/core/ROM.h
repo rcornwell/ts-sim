@@ -24,24 +24,25 @@
 namespace emulator
 {
 
+    
 /**
- * @class RAM
+ * @class ROM
  * @author rich
  * @date 01/06/21
- * @file RAM.h
- * @brief RAM is a generic read-writable memory array.
+ * @file ROM.h
+ * @brief ROM is a generic read-only memory array. All writes are ignored.
  */
 template <typename T>
-class RAM : public Memory<T>
+class ROM : public Memory<T>
 {
-public:
+    public:
     /**
      * @brief Default constructor.
      * @param size size of memory to create.
      * @param base base address of memory. Used by super-classes to 
      *     locate the memory in the address space.
      */
-    RAM(size_t size, size_t base) : 
+    ROM(size_t size, size_t base) : 
         Memory<T>(size)
     {
         this->size_ = size;
@@ -49,7 +50,7 @@ public:
         data_  = new T[size];
     }
 
-    virtual ~RAM() override
+    virtual ~ROM() override
     {
         if (data_)
             delete[] data_;
@@ -93,7 +94,6 @@ public:
             throw Access_error{"Invalid memory location"};
     }
 
-
     /**
      * @brief Return the value of the register.
      * @return T
@@ -104,20 +104,19 @@ public:
             val = 0;
             return false;
         }
-        val = data_[index];
+        val = data_[index];        
         return true;
     };
 
     /**
-     * @brief Set the value of a register to the argument.
+     * @brief Do not allow value to be changed.
      * @param val
      */
 
-    virtual bool write(T val, size_t index) override
-    {
+    virtual bool write([[maybe_unused]]T val, size_t index) override
+    { 
         if (index >= this->size_)
             return false;
-        data_[index] = val;
         return true;
     };
 };

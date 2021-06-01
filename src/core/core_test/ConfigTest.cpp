@@ -21,12 +21,11 @@
 #include <fstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <map>
 #include <vector>
 #include "System.h"
 #include "CPU.h"
-#include "Config.h"
+#include "ConfigFile.h"
 #include "CppUTest/TestHarness.h"
 
 using namespace std;

@@ -3,7 +3,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include "Config.h"
+#include "ConfigFile.h"
 #include "ConfigLexer.h"
 
 namespace core
