@@ -1,0 +1,4 @@
+#define VERSION_MAJOR @ts-sim_VERSION_MAJOR@
+#define VERSION_MINOR @ts-sim_VERSION_MINOR@
+
+#cmakedefine HAVE_UNISTD_H
