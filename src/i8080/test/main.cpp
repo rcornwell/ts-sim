@@ -51,8 +51,8 @@ class bdos : public IO<uint8_t>
 {
 public:
 
-    i8080_cpu<I8080>   *cpu;
-    MemFixed<uint8_t>  *mem;
+    i8080_cpu<I8080>              *cpu;
+    shared_ptr<MemFixed<uint8_t>>  mem;
 
     virtual void init() {};
     virtual void shutdown() {};
@@ -129,7 +129,7 @@ uint8_t bdos_buffer[] = {0171, 0376, 0002, 0302, 0017, 0000, 0173, 0323, 0002,
  * @param name - name of file to read from. Global dir and "/" will be preappended.
  * @param mem - Pointer to memory object to load into.
  */
-void load_mem(string name, Memory<uint8_t> * mem)
+void load_mem(string name, std::shared_ptr<Memory<uint8_t>> mem)
 {
     char *buffer;
     size_t size;
@@ -159,9 +159,9 @@ TEST(CPU, CPUPRE)
     uint64_t  tim = 0;
     uint64_t   n_inst = 0;
     CPU<uint8_t>      *cpu;
-    bdos      *io(new bdos());
-    MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
-    mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
+    std::shared_ptr<bdos>      io = std::make_shared<bdos>();
+    std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
+    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
 
     load_mem("8080PRE.COM", mem);
     cpu = new i8080_cpu<I8080>();
@@ -191,6 +191,8 @@ TEST(CPU, CPUPRE)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
+       auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
     cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
@@ -204,10 +206,10 @@ TEST(CPU, CPUExer)
     uint64_t  tim = 0;
     uint64_t   n_inst = 0;
     CPU<uint8_t>      *cpu;
-    bdos      *io(new bdos());
-    MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
-    mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
-
+    std::shared_ptr<bdos>      io = std::make_shared<bdos>();
+    std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
+    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
+    
     load_mem("8080EXER.COM", mem);
     cpu = new i8080_cpu<I8080>();
     io->cpu = (i8080_cpu<I8080> *)cpu;
@@ -236,6 +238,8 @@ TEST(CPU, CPUExer)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
+    auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
     cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
@@ -249,9 +253,9 @@ TEST(CPU, CPU85Exer)
     uint64_t  tim = 0;
     uint64_t   n_inst = 0;
     CPU<uint8_t>      *cpu;
-    bdos      *io(new bdos());
-    MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
-    mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
+    std::shared_ptr<bdos>      io = std::make_shared<bdos>();
+    std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
+    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
 
     load_mem("8085EXER.COM", mem);
     cpu = new i8080_cpu<I8085>();
@@ -281,6 +285,8 @@ TEST(CPU, CPU85Exer)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
+       auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
     cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
@@ -294,10 +300,10 @@ TEST(CPU, CPUTEST)
     uint64_t  tim = 0;
     uint64_t  n_inst = 0;
     CPU<uint8_t>      *cpu;
-    bdos      *io(new bdos());
-    MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
-    mem->add_memory(new RAM<uint8_t>(64 * 1024, 0));
-
+    std::shared_ptr<bdos>      io = std::make_shared<bdos>();
+    std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
+    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
+    
     load_mem("CPUTEST.COM", mem);
     cpu = new i8080_cpu<I8080>();
     io->cpu = (i8080_cpu<I8080> *)cpu;
@@ -326,6 +332,8 @@ TEST(CPU, CPUTEST)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
+       auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
     cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
@@ -339,15 +347,14 @@ TEST(CPU,TST8080)
     uint64_t  tim = 0;
     uint64_t  n_inst = 0;
     CPU<uint8_t>      *cpu;
-    bdos      *io(new bdos());
-    MemFixed<uint8_t> *mem{new MemFixed<uint8_t>(64*1024)};
-    RAM<uint8_t>  *ram(new RAM<uint8_t>(64 * 1024, 0));
+    std::shared_ptr<bdos>      io = std::make_shared<bdos>();
+    std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
+    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
 
     cpu = new i8080_cpu<I8080>();
     io->cpu = (i8080_cpu<I8080> *)cpu;
     io->mem = mem;
     cpu->SetMem(mem);
-    cpu->add_memory(ram);
     load_mem("TST8080.COM", mem);
     cpu->SetIO(io);
     cpu->start();
@@ -372,6 +379,8 @@ TEST(CPU,TST8080)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
+       auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
     cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;

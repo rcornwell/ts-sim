@@ -24,6 +24,19 @@
 #include <variant>
 #include <string>
 #include <map>
+
+namespace emulator
+{
+
+template<typename T>
+class CPU;
+
+template<typename T>
+class Memory;
+};
+
+#include "CPU.h"
+#include "Memory.h"
 #include "Device.h"
 
 namespace emulator
@@ -50,6 +63,18 @@ public:
     {
     }
 
+    virtual void add_io([[maybe_unused]]std::shared_ptr<IO> io) {};
+
+    virtual void set_cpu(CPU<T>* cpu_v)
+    {
+	    cpu = cpu_v;
+    }
+
+    virtual void set_memory(std::shared_ptr<Memory<T>> mem_v)
+    {
+	    mem = mem_v;
+    }
+
     virtual void init() {};
     virtual void shutdown() {};
     virtual void start() {};
@@ -74,6 +99,10 @@ public:
         core::ConfigOptionParser option("IO Options");
         return option;
     }
+
+protected:
+    CPU<T>* cpu;
+    std::shared_ptr<Memory<T>> mem;
 
 private:
 

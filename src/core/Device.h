@@ -21,6 +21,21 @@ public:
     virtual ~Device()
     {
     }
+
+    virtual void setAddress(size_t addr)
+    {
+	    addr_ = addr;
+    }
+
+    virtual size_t getAddress() const
+    {
+	    return addr_;
+    }
+
+    virtual size_t getSize() const
+    {
+	    return 1;
+    }
     
     virtual void init() {}
     virtual void shutdown() {}
@@ -49,7 +64,8 @@ public:
         return option;
     }
 
-
+protected:
+    size_t addr_;
 private:
 };
 }

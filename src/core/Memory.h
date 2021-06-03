@@ -52,11 +52,11 @@ public:
      * @param size
      * @return
      */
-    Memory(const size_t size)
+    Memory(const size_t size, const size_t base)
     {
         tot_size_ = size;
         size_ = size;
-        base_ = 0;
+        base_ = base;
     }
 
     virtual ~Memory()
@@ -116,7 +116,7 @@ public:
      *        into regions.
      * @param mem - Memory object to attach.
      */
-    virtual void add_memory([[maybe_unused]]Memory *mem) {};
+    virtual void add_memory([[maybe_unused]]std::shared_ptr<Memory> mem) {};
 
     /**
      * @brief Adds options to this CPU module.
@@ -212,7 +212,7 @@ public:
      * @param size
      * @return
      */
-    MemEmpty(const size_t size) : Memory<T>(size)
+    MemEmpty(const size_t size, const size_t base) : Memory<T>(size, base)
     {
     }
     virtual ~MemEmpty()
@@ -238,14 +238,11 @@ public:
      * @param size
      * @return
      */
-    MemFixed(const size_t size) : Memory<T>(size)
+    MemFixed(const size_t size, const size_t base) : Memory<T>(size, base)
     {
-        mem_ = nullptr;
     }
     virtual ~MemFixed()
     {
-	if (mem_ != nullptr)
-            delete mem_;
     }
 
     /**
@@ -261,11 +258,10 @@ public:
      * @brief Sets the memory that this controller will access.
      * @param mem New memory module.
      */
-    virtual void add_memory(Memory<T> *mem) override
+    virtual void add_memory(std::shared_ptr<Memory<T>> mem) override
     {
-	if (mem_ != nullptr)
-            delete mem_;
         mem_ = mem;
+        rmem_ = mem_.get();
         // Update base and size from module.
         this->size_ = mem_->GetSize();
         this->base_ = mem_->GetBase();
@@ -307,8 +303,8 @@ public:
     virtual
     bool read(T& val, size_t index) override
     {
-        if (index >= this->base_ && mem_ != nullptr)
-            return mem_->read(val, index - this->base_);
+        if (index >= this->base_)
+            return rmem_->read(val, index - this->base_);
         val = 0;
         return false;
     };
@@ -325,13 +321,18 @@ public:
     {
         if (index < this->base_)
             return false;
-        return mem_->write(val, index - this->base_);
+        return rmem_->write(val, index - this->base_);
     };
 
     /**
      *  Pointer to memory device that holds actual values.
      */
-    Memory<T> *mem_;
+    std::shared_ptr<Memory<T>> mem_{};
+    
+    /**
+     *  Hold raw pointer for accesing speed.
+     */
+    Memory<T>                  *rmem_;
 };
 
 
@@ -355,9 +356,9 @@ public:
      * @return
      */
     MemArray(const size_t size, const size_t chunk_size = 4096)
-        : Memory<T>(size)
+        : Memory<T>(size, 0)
     {
-        empty_ = new MemEmpty<T>(size);
+        empty_ = std::make_shared<MemEmpty<T>>(size, 0);
         this->size_ = size;
         // Make sure power of two.
         if ((chunk_size & (chunk_size - 1)) != 0)
@@ -367,7 +368,8 @@ public:
         // Compute index shift.
         for(shift_ = 0; chunk_size != (1u << shift_); shift_++);
         // Allocate and initialize the memory.
-        mem_ = new Memory<T> *[num];
+        mem_ = new std::shared_ptr<Memory<T>> [num];
+        // Set all entries to non-existant memory.
         for (size_t i = 0; i < num; i++) {
             mem_[i] = empty_;
         }
@@ -375,7 +377,6 @@ public:
 
     virtual ~MemArray()
     {
-        delete   empty_;
         delete[] mem_;
     }
 
@@ -409,7 +410,7 @@ public:
      *        Pointers to subregions are duplicated.
      * @param mem - Memory to add.
      */
-    virtual void add_memory(Memory<T> *mem) override
+    virtual void add_memory(std::shared_ptr<Memory<T>> mem) override
     {
         size_t b = mem->GetBase() >> shift_;
         size_t t = (mem->GetSize() >> shift_) + b;
@@ -494,35 +495,35 @@ public:
      * @brief Array of memory pointers.
      */
 
-    Memory<T> *empty_;
-    Memory<T> **mem_;
+    std::shared_ptr<Memory<T>> empty_;
+    std::shared_ptr<Memory<T>> *mem_;
 };
 }
 
-#define REGISTER_MEM(systype, model) \
+#define REGISTER_MEM(systype, model, width) \
     namespace core { \
-    class model##MemFactory : public MemFactory { \
+    class systype##_##model##_##MemFactory : public MemFactory { \
     public: \
-        model##MemFactory() \
+        systype##_##model##_##MemFactory() \
         { \
             std::cout << "Registering Mem: " #model << "\n"; \
             systype::registerMem(#model, this); \
         } \
-        virtual MEM_v create() { \
-            return std::make_shared<emulator::systype##_mem<emulator::model>>(); \
+        virtual MEM_v create(const size_t size, const size_t base) { \
+            return std::make_shared<emulator::model<width>>(size, base); \
         } \
     }; \
-    static model##MemFactory global_##model##MemFactory; \
+    static systype##_##model##_##MemFactory global_##systype##_##model##_##MemFactory; \
     };
 
 #define REGISTER_SYSTEM_TEMPLATE_MEM \
     public: \
     static void registerMem(const string & name, core::MemFactory *factory) \
     { mem_factories.insert(make_pair(name, factory)); } \
-    MEM_v create_mem(const string &model, const size_t size) { \
+    MEM_v create_mem(const string &model, const size_t size, const size_t base) { \
         if (mem_factories.count(model) == 0) \
             throw core::SystemError{"Unknown mem type: " + model}; \
-        return mem_factories[model]->create(size); \
+        return mem_factories[model]->create(size, base); \
     } \
     private: \
     static map<string, core::MemFactory *> mem_factories; \
@@ -546,7 +547,7 @@ using MEM_v = std::variant<std::shared_ptr<emulator::Memory<uint8_t>>,
 class MemFactory
 {
 public:
-    virtual MEM_v create(const size_t size) = 0;
+    virtual MEM_v create(const size_t size, const size_t base) = 0;
 };
 
 }

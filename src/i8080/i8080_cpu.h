@@ -1,3 +1,4 @@
+
 /*
  * Author:      Richard Cornwell (rich@sky-visions.com)
  *
@@ -61,6 +62,7 @@ class i8080_cpu : public CPU<uint8_t>
 public:
     i8080_cpu() 
     {
+	    page_size = 4096;
     }
     virtual ~i8080_cpu()
     {
@@ -391,19 +393,24 @@ public:
 
     virtual void init() override
     {
-        Memory<uint8_t> *memctl{new MemArray<uint8_t>((size_t)(64*1024), (size_t)page_size)};
+	    std::cerr << "CPU Init()" << std::endl;
+        std::shared_ptr<Memory<uint8_t>> memctl =
+            std::make_shared<MemArray<uint8_t>>
+	            ((size_t)(64*1024), (size_t)page_size);
+	std::shared_ptr<IO<uint8_t>> ioctl =
+	    std::make_shared<IO_map<uint8_t>>(256u);
         SetMem(memctl);
-        SetIO(new IO_map<uint8_t>(256u));
+        SetIO(ioctl);
     };
 
-    void shutdown() {};
+    virtual void shutdown() override {};
 
-    void start()
+    virtual void start() override
     {
         running = true;
     };
 
-    void reset()
+    virtual void reset() override
     {
         running = false;
         pc = 0;
@@ -411,17 +418,16 @@ public:
         ie = false;
     };
 
-    void stop()
+    virtual void stop() override
     {
         running = false;
     };
 
-    void trace()
-    ;
+    virtual void trace() override;
 
-    uint64_t step();
+    virtual uint64_t step() override;
 
-    void run() {};
+    virtual void run() override {};
 
     string disassemble(uint8_t ir, uint16_t addr, int &len);
 

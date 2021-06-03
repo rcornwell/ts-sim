@@ -264,20 +264,19 @@ protected:
      * @brief Parse this option. Must be overridden for each supported type.
      * @param p_lexer
      */
-    void parse(ConfigLexer *p_lexer) override;
+    virtual void parse(ConfigLexer *p_lexer) override;
 
     /**
      * @brief Called after a change is made to option to update default and
      *      assign values.
      */
-    virtual void update_reference()
+    void update_reference()
     {
         if (this->assign_to_) {
             if (this->is_set() || default_)
                 *this->assign_to_ = getValue();
         }
     }
-
 
     /**
      * @brief Add a value to option. Currently only one value is supported.
@@ -338,11 +337,13 @@ public:
      * @param assign_to - Location to set on change.
      */
     ConfigBool(const std::string& name, const std::string& description,
-               bool* assign_to = nullptr): ConfigValue<bool>(name, description, false, assign_to)
+               bool* assign_to = nullptr): ConfigValue<bool>(name, description)
     {
+        assign_to_ = assign_to;
         is_set_ = false;
+        value_ = false;
     }
-
+    
     // The default value for boolean flags is false.
     void setDefault(const bool& value) = delete;
 protected:
@@ -394,12 +395,6 @@ protected:
      * @param p_lexer
      */
     void parse(ConfigLexer *p_lexer) override;
-
-    /**
-    * @brief Called after a change is made to option to update default and
-    *      assign values.
-    */
-    virtual void update_reference() override;
 
     /**
      * @brief Add a value to option. Currently only one value is supported.

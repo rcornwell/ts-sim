@@ -14,8 +14,10 @@ include_directories(BEFORE ${CORE_PATH})
 add_library(corelib STATIC ${CORE_SRC})
 target_include_directories(corelib PUBLIC ${CORE_PATH})
 
+if(RUN_TESTS)
 # include core_test programs to run.
 add_subdirectory(core_test)
+endif()
 #add_executable(core_test core_test/main.cpp)
 #target_link_libraries(core_test corelib)
 #target_link_libraries(core_test UnitTest++)

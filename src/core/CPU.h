@@ -27,7 +27,6 @@
 #include "IO.h"
 #include "ConfigOption.h"
 
-
 namespace emulator
 {
 
@@ -56,15 +55,12 @@ public:
 
     CPU() 
     {
-        mem = nullptr;
         io = nullptr;
         running = false;
         pc = 0;
     };
 
     virtual ~CPU() {
-	delete mem;
-	delete io;
     };
     
     CPU(const CPU&) = delete;
@@ -79,17 +75,17 @@ public:
         std::cout << "CPU model = " << this->getType() << std::endl;
     }
     
-    std::string name;
+    std::string name_;
     
     CPU& SetName(const std::string& name)
     {
-        this->name = name;
+        name_ = name;
         return *this;
     }
     
     const std::string& GetName() const
     {
-        return name;
+        return name_;
     }
 
     bool running;
@@ -97,9 +93,9 @@ public:
     size_t pc;
 
     virtual
-    CPU& SetPC(const size_t pc)
+    CPU& SetPC(const size_t pc_v)
     {
-        this->pc = pc;
+        pc = pc_v;
         return *this;
     }
 
@@ -109,56 +105,66 @@ public:
         return pc;
     }
 
-    Memory<T>  *mem;
+    std::shared_ptr<Memory<T>>  sh_mem{};
+    Memory<T> *mem;
     
     virtual
-    CPU& SetMem(Memory<T>* mem)
+    CPU& SetMem(std::shared_ptr<Memory<T>> mem_v)
     {
-	if (this->mem != nullptr)
-	    delete this->mem;
-        this->mem = mem;
+        sh_mem = mem_v;
+        mem = sh_mem.get();
         return *this;
     }
     
     virtual
-    Memory<T>* GetMem() const
+    std::shared_ptr<Memory<T>> GetMem() const
     {
-        return mem;
+        return sh_mem;
     }
     
     virtual
-    void add_memory(Memory<T>* mem)
+    void add_memory(std::shared_ptr<Memory<T>> mem_v)
     {
-        if (this->mem == nullptr)
-            this->mem = mem;
-        else
-            this->mem->add_memory(mem);
+        if (sh_mem == nullptr) {
+            sh_mem = mem_v;
+            mem = sh_mem.get();
+        } else {
+            sh_mem->add_memory(mem_v);
+        }
     }
 
-    IO<T>  *io;
+    std::shared_ptr<IO<T>>  io{};
     
     virtual
-    CPU& SetIO(IO<T>* io)
+    CPU& SetIO(std::shared_ptr<IO<T>> io_v)
     {
-        this->io = io;
+        io = io_v;
         return *this;
     }
     
     virtual
-    IO<T>* GetIO()
+    std::shared_ptr<IO<T>> GetIO()
     {
         return io;
     }
     
     virtual
-    void add_io(IO<T>* io)
+    void add_io(std::shared_ptr<IO<T>> io_v)
     {
-        this->io = io;
+        if (io == nullptr)
+            io = io_v;
+        else
+            io->add_io(io_v);
     }
 
     virtual void trace() {};
 
-    virtual void init() {};
+    virtual void init() { std::cerr << "Init CPU()" << std::endl; };
+
+    virtual void init_io() {
+	    io->set_cpu(this);
+	    io->set_memory(sh_mem);
+    }
 
     virtual void shutdown() {};
 
@@ -231,11 +237,11 @@ private:
     } \
     private: \
     static map<string, core::CPUFactory *> cpu_factories; \
-    public: \
-
+    public:
 
 namespace core
 {
+
     
 using CPU_v = std::variant<std::shared_ptr<emulator::CPU<uint8_t>>,
              std::shared_ptr<emulator::CPU<uint16_t>>, 
@@ -249,3 +255,4 @@ public:
 };
 
 }
+

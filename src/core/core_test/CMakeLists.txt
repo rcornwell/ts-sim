@@ -16,6 +16,7 @@ set(TEST_SOURCES
      OptionsTest.cpp
      ConfigTest.cpp
      ConfigLexerTest.cpp
+     MemoryTest.cpp
      main.cpp 
      )
 

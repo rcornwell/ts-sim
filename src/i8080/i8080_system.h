@@ -46,15 +46,11 @@ public:
         cout << "Class Type = " << this->getType() << endl;
     }
     
-    virtual void init() {
-        
-    }
-
     virtual size_t max_cpus() { return 1; }
     
-    virtual void add_cpu(core::CPU_v cpu) {
-        this->cpu = std::get<shared_ptr<emulator::CPU<uint8_t>>>(cpu);
-    }
+//    virtual void add_cpu(core::CPU_v cpu) {
+ //       this->cpu = std::get<shared_ptr<emulator::CPU<uint8_t>>>(cpu);
+  //  }
        
 
 REGISTER_SYSTEM_TEMPLATE_CPU
@@ -67,9 +63,9 @@ REGISTER_SYSTEM_TEMPLATE_IO
 //    virtual void run();
 //    virtual void stop();
 private:
-     std::shared_ptr<emulator::CPU<uint8_t>>  cpu;
-     std::shared_ptr<emulator::Memory<uint8_t>>  mem;
-     std::shared_ptr<emulator::IO<uint8_t>>   io;
+//     std::shared_ptr<emulator::CPU<uint8_t>>  cpu;
+ //    std::shared_ptr<emulator::Memory<uint8_t>>  mem;
+  //   std::shared_ptr<emulator::IO<uint8_t>>   io;
 
 };
 }

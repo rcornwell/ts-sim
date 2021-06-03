@@ -6,8 +6,13 @@ project(${PROJECT_NAME} VERSION 0.0.0
 
 set (${PROJECT_NAME}_VERSION_MAJOR 0)
 set (${PROJECT_NAME}_VERSION_MINOR 0)
+
+# Add a custom CMake Modules directory
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules
+                      ${CMAKE_MODULE_PATH})
+
 # Generate Doxygen documentation files
-option(BUILD_DOC "Build documenation" OFF)
+option(BUILD_DOC "Build documenation" ON)
 option(RUN_TESTS "Run tests" ON)
 
 if (BUILD_DOC)
@@ -42,13 +47,9 @@ else()
     pkg_search_module(CPPUTEST REQUIRED cpputest>=3.8)
     message(STATUS "Found CppUTest version ${CPPUTEST_VERSION}")
 endif()
+ENABLE_TESTING()
 endif()
 
-# Add a custom CMake Modules directory
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules
-                      ${CMAKE_MODULE_PATH})
-
-ENABLE_TESTING()
 
 set(CMAKE_CXX_STANDARD 17)
 if(NOT CMAKE_BUILD_TYPE)

@@ -42,8 +42,8 @@ class ROM : public Memory<T>
      * @param base base address of memory. Used by super-classes to 
      *     locate the memory in the address space.
      */
-    ROM(size_t size, size_t base) : 
-        Memory<T>(size)
+    ROM(const size_t size, const size_t base) : 
+        Memory<T>(size, base)
     {
         this->size_ = size;
         this->base_ = base;

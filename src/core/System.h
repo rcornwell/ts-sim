@@ -64,7 +64,12 @@ public:
 };
 
 struct MemInfo {
-    MEM_v                   mem;
+    MEM_v                    mem;
+    std::vector<std::string> cpu_names;
+};
+
+struct IOInfo {
+    IO_v                     io;
     std::vector<std::string> cpu_names;
 };
 
@@ -73,7 +78,7 @@ class System
 public:
     System() {
  
-        };
+    };
         
     virtual ~System() {};
     
@@ -94,7 +99,9 @@ public:
     
     virtual size_t number_cpus() { return this->cpus.size(); }
 
-    virtual void init() {};
+    virtual void init();
+    
+    virtual void start();
 
    // virtual void shutdown();
    // virtual void run();
@@ -140,25 +147,25 @@ public:
     
     void add_memory(MemInfo mem)
     {
-        this->mem.push_back(mem);
+        this->memories.push_back(mem);
     }
     
-    void add_io(IO_v io)
+    void add_io(IOInfo io)
     {
-        this->io_units.push_back(io);
+        this->io_ctrl.push_back(io);
     }
     
     virtual CPU_v create_cpu(const std::string &model) = 0;
     
-    virtual MEM_v create_mem(const std::string &model, const size_t size) = 0;
+    virtual MEM_v create_mem(const std::string &model, const size_t size, const size_t base = 0) = 0;
         
     virtual IO_v create_io(const std::string &model) = 0;
    
     std::vector<CPU_v> cpus;
     
-    std::vector<IO_v> io_units;
+    std::vector<IOInfo> io_ctrl;
     
-    std::vector<MemInfo> mem;
+    std::vector<MemInfo> memories;
     
 private:
     static std::map<std::string, SystemFactory *> factories;

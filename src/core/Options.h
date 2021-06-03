@@ -507,7 +507,7 @@ protected:
     /**
      * @brief Called when value changes to update assigned value.
      */
-    virtual void update_reference()
+    void update_reference()
     {
         if (this->assign_to_) {
             if (this->is_set() || default_)
@@ -540,9 +540,9 @@ protected:
     // Holds place to save setting to.
     T* assign_to_;
     // Holds last value seen.
-    T value_;
+    T value_{};
     // Holds number of times this option has been seen.
-    size_t count_;
+    size_t count_{};
 };
 
 
