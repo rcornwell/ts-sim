@@ -412,9 +412,9 @@ public:
      */
     virtual void add_memory(std::shared_ptr<Memory<T>> mem) override
     {
-        size_t b = mem->GetBase() >> shift_;
-        size_t t = (mem->GetSize() >> shift_) + b;
-        for (size_t i = b; i < t; i++) {
+        size_t base_address = mem->GetBase() >> shift_;
+        size_t top_address = (mem->GetSize() >> shift_) + base_address;
+        for (size_t i = base_address; i < top_address; i++) {
             mem_[i] = mem;
         }
     }
@@ -427,11 +427,11 @@ public:
     virtual void Get(T &val, size_t index) override
     {
          // Compute bin address is located in.
-        size_t b = index >> shift_;
+        size_t base = index >> shift_;
 
         // Make sure in range and access it.
         if (index < this->size_) 
-            mem_[b]->Get(val, index - mem_[b]->GetBase());
+            mem_[base]->Get(val, index - mem_[base]->GetBase());
         else
             throw Access_error{"Invalid memory location"};
     }
@@ -443,9 +443,9 @@ public:
      */
     virtual void Set(T val, size_t index) override
     {
-       size_t b = index >> shift_;
+       size_t base = index >> shift_;
         if (index < this->size_)
-            return mem_[b]->Set(val, index - mem_[b]->GetBase());
+            return mem_[base]->Set(val, index - mem_[base]->GetBase());
         else
             throw Access_error{"Invalid memory location"};
     }
@@ -461,11 +461,11 @@ public:
     bool read(T& val, size_t index) override
     {
         // Compute bin address is located in.
-        size_t b = index >> shift_;
+        size_t base = index >> shift_;
 
         // Make sure in range and access it.
         if (index < this->size_) 
-            return mem_[b]->read(val, index - mem_[b]->GetBase());
+            return mem_[base]->read(val, index - mem_[base]->GetBase());
         val = 0;
         return false;
     };
@@ -480,9 +480,9 @@ public:
     virtual
     bool write(T val, size_t index) override
     {
-        size_t b = index >> shift_;
+        size_t base = index >> shift_;
         if (index < this->size_)
-            return mem_[b]->write(val, index - mem_[b]->GetBase());
+            return mem_[base]->write(val, index - mem_[base]->GetBase());
         return false;
     };
 

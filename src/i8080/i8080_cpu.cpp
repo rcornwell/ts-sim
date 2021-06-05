@@ -20,9 +20,8 @@
 #include <stdio.h>
 #include <iostream>
 #include <utility>
-#include "../i8080/i8080_cpu.h"
-#include "RAM.h"
-#include "ROM.h"
+#include "i8080_cpu.h"
+#include "i8080_system.h"
 
 namespace emulator
 {
@@ -899,6 +898,7 @@ uint64_t i8080_cpu<MOD>::step()
     ir = fetch();
     cycle_time = ins_time[ir];
     decode(ir);
+    io->step();
 
     return cycle_time;
 }
@@ -1068,9 +1068,3 @@ template class i8080_cpu<I8085>;
 std::map<std::string, core::CPUFactory *> core::i8080::cpu_factories;
 REGISTER_CPU(i8080, I8080);
 REGISTER_CPU(i8080, I8085);
-
-std::map<std::string, core::MemFactory *> core::i8080::mem_factories;
-std::map<std::string, core::IOFactory *> core::i8080::io_factories;
-
-REGISTER_MEM(i8080, RAM, uint8_t);
-REGISTER_MEM(i8080, ROM, uint8_t);

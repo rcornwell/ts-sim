@@ -27,7 +27,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include "i8080_system.h"
 #include "i8080_cpu.h"
+#include "i8080_con.h"
 #include "RAM.h"
 #include "IO.h"
 #include "ConfigOption.h"
@@ -36,15 +38,12 @@
 using namespace emulator;
 using namespace std;
 
-
-
-
 /**
  * @brief Load a CPM .COM file into memory.
  * @param name - name of file to read from. Global dir and "/" will be preappended.
  * @param mem - Pointer to memory object to load into.
  */
-void load_mem(string name, std::shared_ptr<Memory<uint8_t>> mem)
+void load_mem(string name, shared_ptr<Memory<uint8_t>> mem)
 {
     char *buffer;
     size_t size;
@@ -68,36 +67,47 @@ void test_system()
 {
     uint64_t  tim = 0;
     uint64_t   n_inst = 0;
-    std::shared_ptr<core::System> sys = core::System::create("i8080");
+    // Create top level system object.
+    shared_ptr<core::System> sys = core::System::create("i8080");
+    // Create CPU and some memory.
     core::CPU_v      cpu_v = sys->create_cpu("I8080");
     core::MEM_v      ram_v = sys->create_mem("RAM", 62*1024, 0);
     core::MEM_v      rom_v = sys->create_mem("ROM", 2048, 0xf800);
-    std::shared_ptr<emulator::CPU<uint8_t>> cpu = 
-	    std::get<std::shared_ptr<emulator::CPU<uint8_t>>>(cpu_v);
-    std::shared_ptr<emulator::i8080_cpu<I8080>> cpu_8 =
-        std::dynamic_pointer_cast<emulator::i8080_cpu<I8080>>(cpu);
-    std::shared_ptr<emulator::Memory<uint8_t>> rom_m = 
-            std::get<std::shared_ptr<emulator::Memory<uint8_t>>>(rom_v); 
+    core::DEV_v      con_v = sys->create_dev("con");
+
+    // Get pointers to specific classes, to simplify things.
+    shared_ptr<CPU<uint8_t>> cpu = get<shared_ptr<CPU<uint8_t>>>(cpu_v);
+    shared_ptr<i8080_cpu<I8080>> cpu_8 = dynamic_pointer_cast<i8080_cpu<I8080>>(cpu);
+    shared_ptr<Memory<uint8_t>> rom_m = get<shared_ptr<Memory<uint8_t>>>(rom_v);
+    // Set up chunk size for memory access.
     cpu_8->page_size = 2048;
-    cpu->SetName("cpu");
-    sys->add_cpu(cpu_v);
+    visit([](const auto& obj) {
+        obj->setAddress(0x5c);
+    }, con_v);
+    // Set the names on the objects.
     core::MemInfo    ram_info{ram_v, {"cpu"}};
     core::MemInfo    rom_info{rom_v, {"cpu"}};
+    core::DevInfo    con_info{con_v, {}};
+    cpu->SetName("cpu");
+    // Connect things together.
+    sys->add_cpu(cpu_v);
     sys->add_memory(ram_info);
     sys->add_memory(rom_info);
-    auto caller = [](const auto& obj) { obj->Set(0166, 0); };
-    std::visit(caller, ram_v);
+    sys->add_device(con_info);
+
+    // Load rom with monitor.
     load_mem("gb01.bin", rom_m);
+    // Final initialization.
     sys->init();
     cpu->SetPC(0xf800);
     sys->start();
     // Inject halt opcode.
-//        mem->write(0323, 5);  // Output
-//        mem->write(0001, 6);  // Not important.
-//        mem->write(0xc9, 7);  // return instruction.
+    visit([](const auto& obj) {
+        obj->Set(0166, 0);
+    }, ram_v);
 
     while(cpu->running) {
-        cpu->trace();
+    //    cpu->trace();
         tim += cpu->step();
         n_inst++;
     }
@@ -107,6 +117,6 @@ void test_system()
 
 int main(int argc, char **argv)
 {
-	test_system();
-	return 0;
+    test_system();
+    return 0;
 }

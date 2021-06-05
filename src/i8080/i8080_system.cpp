@@ -18,8 +18,19 @@
  */
 
 #include "i8080_system.h"
+#include "Memory.h"
+#include "RAM.h"
+#include "ROM.h"
 
-std::map<std::string, core::SystemFactory *> core::System::factories;
+using namespace std;
+using namespace core;
+
+map<string, SystemFactory *> System::factories;
 REGISTER_SYSTEM(i8080)
 
-//std::map<std::string, core::CPUFactory *> core::i8080::cpu_factories;
+map<string, MemFactory *>    i8080::mem_factories;
+map<string, IOFactory *>     i8080::io_factories;
+map<string, DeviceFactory *> i8080::dev_factories;
+
+REGISTER_MEM(i8080, RAM, uint8_t);
+REGISTER_MEM(i8080, ROM, uint8_t);

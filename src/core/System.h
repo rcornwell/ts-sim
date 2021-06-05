@@ -70,7 +70,13 @@ struct MemInfo {
 
 struct IOInfo {
     IO_v                     io;
+    bool                     added;   // Indicate if this has been assigned.
     std::vector<std::string> cpu_names;
+};
+
+struct DevInfo {
+    DEV_v                    dev;
+    std::vector<std::string> io_names;
 };
 
 class System
@@ -106,10 +112,6 @@ public:
    // virtual void shutdown();
    // virtual void run();
    // virtual void stop();
-
-    // vector<CPU> cpu;
-    // vector<IO>  io;
-    // vector<Device> devices;
 
     // List all registered System model types.
     static
@@ -155,18 +157,27 @@ public:
         this->io_ctrl.push_back(io);
     }
     
+    void add_device(DevInfo dev)
+    {
+        this->devices.push_back(dev);
+    }
+
     virtual CPU_v create_cpu(const std::string &model) = 0;
     
     virtual MEM_v create_mem(const std::string &model, const size_t size, const size_t base = 0) = 0;
         
     virtual IO_v create_io(const std::string &model) = 0;
-   
+
+    virtual DEV_v create_dev(const std::string &model) = 0;
+
     std::vector<CPU_v> cpus;
     
     std::vector<IOInfo> io_ctrl;
     
     std::vector<MemInfo> memories;
     
+    std::vector<DevInfo> devices;
+
 private:
     static std::map<std::string, SystemFactory *> factories;
 };

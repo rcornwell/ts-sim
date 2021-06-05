@@ -53,7 +53,7 @@ void ConfigValue<int>::parse(ConfigLexer *p_lexer)
     p_lexer->advance();
     if (p_lexer->token() != ConfigToken::Number)
         throw Config_error{"Not a number: " + name_ };
-    add_value(p_lexer->token_value());
+    add_value((int)p_lexer->token_value());
     p_lexer->advance();
 }
 

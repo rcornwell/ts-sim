@@ -1,4 +1,3 @@
-
 /*
  * Author:      Richard Cornwell (rich@sky-visions.com)
  *
@@ -26,8 +25,6 @@
 #include "CPU.h"
 #include "Memory.h"
 #include "ConfigOption.h"
-#include "i8080_system.h"
-
 
 namespace emulator
 {
@@ -60,9 +57,9 @@ template <enum cpu_model MOD>
 class i8080_cpu : public CPU<uint8_t>
 {
 public:
-    i8080_cpu() 
+    i8080_cpu()
     {
-	    page_size = 4096;
+        page_size = 4096;
     }
     virtual ~i8080_cpu()
     {
@@ -85,12 +82,13 @@ public:
     int       page_size;
 
     virtual
-    core::ConfigOptionParser options() override {
+    core::ConfigOptionParser options() override
+    {
         core::ConfigOptionParser option("CPU options");
         auto page_opt = option.add<core::ConfigValue<int>>("pagesize", "address spacing", 0, &page_size);
         return option;
     }
-    
+
 #define Tc 250
     int   ins_time[256] = {
         /*   0     1     2     3     4     5     6     7 */
@@ -391,23 +389,35 @@ public:
 
     void decode(uint8_t op);
 
+
+    virtual bool noIO() const override
+    {
+        return true;
+    }
+
+
     virtual void init() override
     {
-	    std::cerr << "CPU Init()" << std::endl;
+        std::cerr << "CPU Init()" << std::endl;
         std::shared_ptr<Memory<uint8_t>> memctl =
-            std::make_shared<MemArray<uint8_t>>
-	            ((size_t)(64*1024), (size_t)page_size);
-	std::shared_ptr<IO<uint8_t>> ioctl =
-	    std::make_shared<IO_map<uint8_t>>(256u);
+                                          std::make_shared<MemArray<uint8_t>>
+                                          ((size_t)(64*1024), (size_t)page_size);
+        std::shared_ptr<IO<uint8_t>> ioctl =
+                                      std::make_shared<IO_map<uint8_t>>(256u);
+        ioctl->SetName("i8080IO");
         SetMem(memctl);
         SetIO(ioctl);
     };
 
-    virtual void shutdown() override {};
+    virtual void shutdown() override
+    {
+        io->shutdown();
+    };
 
     virtual void start() override
     {
         running = true;
+        io->start();
     };
 
     virtual void reset() override
@@ -416,18 +426,23 @@ public:
         pc = 0;
         PSW = 2;
         ie = false;
+        io->reset();
     };
 
     virtual void stop() override
     {
         running = false;
+        io->stop();
     };
 
     virtual void trace() override;
 
     virtual uint64_t step() override;
 
-    virtual void run() override {};
+    virtual void run() override
+    {
+        io->run();
+    };
 
     string disassemble(uint8_t ir, uint16_t addr, int &len);
 

@@ -66,6 +66,7 @@ public:
     REGISTER_SYSTEM_TEMPLATE_CPU
     REGISTER_SYSTEM_TEMPLATE_IO
     REGISTER_SYSTEM_TEMPLATE_MEM
+    REGISTER_SYSTEM_TEMPLATE_DEV
 };
 };
 
@@ -120,6 +121,7 @@ REGISTER_SYSTEM(test);
 map<string, CPUFactory *> test::cpu_factories;
 map<string, IOFactory *> test::io_factories;
 map<string, MemFactory *> test::mem_factories;
+map<string, DeviceFactory *> test::dev_factories;
 REGISTER_CPU(test, s1);
 REGISTER_CPU(test, s2);
 };

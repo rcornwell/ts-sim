@@ -138,23 +138,31 @@ public:
     virtual
     CPU& SetIO(std::shared_ptr<IO<T>> io_v)
     {
+        std::cerr << "Setting IO(): " << io_v->GetName() << std::endl;
         io = io_v;
         return *this;
     }
     
     virtual
-    std::shared_ptr<IO<T>> GetIO()
+    core::IO_v GetIO() const
     {
+        std::cerr << "Getting IO(): " << io->GetName() << std::endl;
         return io;
     }
     
     virtual
     void add_io(std::shared_ptr<IO<T>> io_v)
     {
+        std::cerr << "Adding IO()" << std::endl;
         if (io == nullptr)
             io = io_v;
         else
             io->add_io(io_v);
+    }
+
+    virtual bool noIO() const
+    {
+        return false;
     }
 
     virtual void trace() {};
@@ -171,21 +179,28 @@ public:
     virtual void start()
     {
         running = true;
+        io->start();
     };
 
-    virtual void reset() {};
+    virtual void reset() {
+        io->reset();
+    }
 
     virtual void stop()
     {
         running = false;
+        io->stop();
     };
 
     virtual uint64_t step()
     {
+        io->step();
         return 0;
     };
 
-    virtual void run() {};
+    virtual void run() {
+        io->run();
+    };
     
     virtual
     core::ConfigOptionParser options() {

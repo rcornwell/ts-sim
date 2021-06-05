@@ -24,6 +24,7 @@
 #include <variant>
 #include <string>
 #include <map>
+#include "ConfigOption.h"
 
 namespace emulator
 {
@@ -63,16 +64,42 @@ public:
     {
     }
 
+    virtual auto getType() const -> std::string
+    {
+        return "IO";
+    }
+
+    void showModel()
+    {
+        std::cout << "IO model = " << this->getType() << std::endl;
+    }
+
+    std::string name_;
+
+    IO& SetName(const std::string& name)
+    {
+        name_ = name;
+        return *this;
+    }
+
+    const std::string& GetName() const
+    {
+        return name_;
+    }
+
+
     virtual void add_io([[maybe_unused]]std::shared_ptr<IO> io) {};
+
+    virtual void add_device([[maybe_unused]]std::shared_ptr<Device<T>> dev) {};
 
     virtual void set_cpu(CPU<T>* cpu_v)
     {
-	    cpu = cpu_v;
+        cpu = cpu_v;
     }
 
     virtual void set_memory(std::shared_ptr<Memory<T>> mem_v)
     {
-	    mem = mem_v;
+        mem = mem_v;
     }
 
     virtual void init() {};
@@ -86,10 +113,12 @@ public:
     virtual bool input(T &val, [[maybe_unused]]size_t port)
     {
         val = 0;
+        std::cerr << "IO_input " << std::hex << port << std::endl;
         return false;
     }
     virtual bool output([[maybe_unused]]T val, [[maybe_unused]]size_t port)
     {
+        std::cerr << "IO_output " << std::hex << port << std::endl;
         return false;
     }
 
@@ -179,45 +208,98 @@ template<typename T>
 class IO_map : public IO<T>
 {
 public:
-    IO_map(const size_t num_devices) : ndevices(num_devices)
+    IO_map(const size_t num_devices) : max_ports_(num_devices)
     {
-        nuldev = new Device<T>();
-        devices = new Device<T> *[ndevices];
+        nuldev_ = std::make_shared<Device<T>>();
+        devices_ = new std::shared_ptr<Device<T>> [max_ports_];
         for (size_t i = 0; i < num_devices; i++)
-            devices[i] = nuldev;
+            devices_[i] = nuldev_;
     }
 
     virtual ~IO_map()
     {
-        delete[] devices;
-        delete nuldev;
+        delete[] devices_;
     }
 
-    virtual void init() {};
-    virtual void shutdown() {};
-    virtual void start() {};
-    virtual void reset() {};
-    virtual void stop() {};
-    virtual void step() {};
-    virtual void run() {};
-
-    virtual bool input(T &val, size_t port)
+    virtual void add_device(std::shared_ptr<Device<T>> dev) override
     {
-        if (port > ndevices)
+      //  std::cerr << "Adding device: " << dev->GetName() << " " << std::hex << dev->getAddress() << std::endl;
+        // Later these will throw an exception.
+        size_t first_port = dev->getAddress();
+        if (first_port > max_ports_)
+            return;
+        size_t num_ports = dev->getSize();
+        if ((first_port + num_ports) > max_ports_)
+            return;
+        for (size_t i = 0; i < num_ports; i++) {
+            devices_[first_port + i] = dev;
+        }
+    };
+
+    virtual void init() override
+    {
+        for(size_t i = 0; i < max_ports_; i++) {
+            devices_[i]->init();
+        };
+    };
+
+    virtual void start() override
+    {
+        for(size_t i = 0; i < max_ports_; i++) {
+            devices_[i]->start();
+        };
+    };
+
+    virtual void reset() override
+    {
+        for(size_t i = 0; i < max_ports_; i++) {
+            devices_[i]->reset();
+        };
+    };
+    virtual void stop() override
+    {
+        for(size_t i = 0; i < max_ports_; i++) {
+            devices_[i]->stop();
+        };
+    };
+    virtual void step() override
+    {
+        for(size_t i = 0; i < max_ports_; i++) {
+            devices_[i]->step();
+        };
+    };
+    virtual void run() override
+    {
+        for(size_t i = 0; i < max_ports_; i++) {
+            devices_[i]->run();
+        };
+    };
+    virtual void shutdown() override
+    {
+        for(size_t i = 0; i < max_ports_; i++) {
+            devices_[i]->shutdown();
+        };
+    };
+
+    virtual bool input(T &val, size_t port) override
+    {
+        if (port > max_ports_)
             return false;
-        return devices[port]->input(val, port);
+       // std::cerr << "IOInput()" << std::hex << port << std::endl;
+        return devices_[port]->input(val, port);
     }
 
-    virtual bool output(T val, size_t port)
+    virtual bool output(T val, size_t port) override
     {
-        if (port > ndevices)
+        if (port > max_ports_)
             return false;
-        return devices[port]->output(val, port);
+       // std::cerr << "IOOutput()" << std::hex << port << std::endl;
+        return devices_[port]->output(val, port);
     }
 
 private:
-    size_t ndevices;
-    Device<T> *nuldev;
-    Device<T> **devices;
+    size_t max_ports_;
+    std::shared_ptr<Device<T>> nuldev_;
+    std::shared_ptr<Device<T>> *devices_;
 };
 }

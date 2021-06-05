@@ -26,6 +26,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include "i8080_system.h"
 #include "i8080_cpu.h"
 #include "RAM.h"
 #include "IO.h"
