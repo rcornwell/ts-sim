@@ -39,7 +39,7 @@ void System::init()
             obj->init();
         }, cpu);
         string name = visit([](const auto& obj) {
-            return obj->GetName();
+            return obj->getName();
         }, cpu);
         cerr << "Init CPU: " << name << endl;
         // Check if the CPU needs any I/O controllers.
@@ -51,15 +51,15 @@ void System::init()
             // Get the IO controller for this CPU.
             IOInfo info{};
             IO_v io_ctrl = visit([](const auto& obj) {
-                return obj->GetIO();
+                return obj->getIO();
             }, cpu);
             info.io = io_ctrl;
             info.cpu_names.push_back(name);
             info.added = true;
             // Add it in, but flag as added.
-            add_io(info);
+            addIo(info);
             string io_name = visit([](const auto& obj) {
-                return obj->GetName();
+                return obj->getName();
             }, io_ctrl);
             cerr << "CPU IO: " << io_name << endl;
         }
@@ -70,10 +70,9 @@ void System::init()
         // See if this CPU matches the names vector.
         for (auto &cpu : cpus ) {
             // Grab name of this CPU.
-            auto caller = [](const auto& obj) {
-                return obj->GetName();
-            };
-            string name = visit(caller, cpu);
+            string name = visit([](const auto& obj) {
+                return obj->getName();
+            }, cpu);
             // If Memory belongs to this CPU, add it.
             if (mem.cpu_names.size() == 0 ||
                 find(mem.cpu_names.begin(), mem.cpu_names.end(), name)
@@ -83,22 +82,22 @@ void System::init()
                     [](shared_ptr<CPU<uint8_t>> & c,
                        shared_ptr<Memory<uint8_t>> & m)
                     {
-                        c->add_memory(m);
+                        c->addMemory(m);
                     },
                     [](shared_ptr<CPU<uint16_t>> & c,
                        shared_ptr<Memory<uint16_t>> & m)
                     {
-                        c->add_memory(m);
+                        c->addMemory(m);
                     },
                     [](shared_ptr<CPU<uint32_t>> & c,
                        shared_ptr<Memory<uint32_t>> & m)
                     {
-                        c->add_memory(m);
+                        c->addMemory(m);
                     },
                     [](shared_ptr<CPU<uint64_t>> & c,
                        shared_ptr<Memory<uint64_t>> & m)
                     {
-                        c->add_memory(m);
+                        c->addMemory(m);
                     },
                     []([[maybe_unused]]auto & c, [[maybe_unused]]auto & m) {}
                 }, cpu, mem.mem);
@@ -116,7 +115,7 @@ void System::init()
         for (auto &cpu : cpus ) {
             // Grab name of this CPU.
             string name = visit([](const auto& obj) {
-                return obj->GetName();
+                return obj->getName();
             }, cpu);
             // If Memory belongs to this CPU, add it.
             if (io.cpu_names.size() == 0 ||
@@ -127,22 +126,22 @@ void System::init()
                     [](shared_ptr<CPU<uint8_t>> & c,
                        shared_ptr<IO<uint8_t>> & i)
                     {
-                        c->add_io(i);
+                        c->addIo(i);
                     },
                     [](shared_ptr<CPU<uint16_t>> & c,
                        shared_ptr<IO<uint16_t>> & i)
                     {
-                        c->add_io(i);
+                        c->addIo(i);
                     },
                     [](shared_ptr<CPU<uint32_t>> & c,
                        shared_ptr<IO<uint32_t>> & i)
                     {
-                        c->add_io(i);
+                        c->addIo(i);
                     },
                     [](shared_ptr<CPU<uint64_t>> & c,
                        shared_ptr<IO<uint64_t>> & i)
                     {
-                        c->add_io(i);
+                        c->addIo(i);
                     },
                     []([[maybe_unused]]auto & c, [[maybe_unused]]auto & i) {}
                 }, cpu, io.io);
@@ -152,20 +151,19 @@ void System::init()
 
     // Now hook CPU's up to IO units.
     for(auto &cpu : cpus ) {
-        auto do_init = [](const auto& obj) {
+        visit([](const auto& obj) {
             obj->init_io();
-        };
-        visit(do_init, cpu);
+        }, cpu);
     }
 
     // Now attach devices to their I/O controllers.
     for(auto &dev : devices ) {
-        string dev_name = visit([](const auto& obj) { return obj->GetName(); }, dev.dev);
+        string dev_name = visit([](const auto& obj) { return obj->getName(); }, dev.dev);
         // See if this CPU matches the names vector.
         for (auto &io : io_ctrl ) {
             // Grab name of this IO controller.
             string name = visit([](const auto& obj) {
-                return obj->GetName();
+                return obj->getName();
             }, io.io);
             // If Device belongs to this controller add it.
             if (dev.io_names.size() == 0 ||
@@ -177,22 +175,22 @@ void System::init()
                     [](shared_ptr<IO<uint8_t>> & i,
                        shared_ptr<Device<uint8_t>> & d)
                     {
-                        i->add_device(d);
+                        i->addDevice(d);
                     },
                     [](shared_ptr<IO<uint16_t>> & i,
                        shared_ptr<Device<uint16_t>> & d)
                     {
-                        i->add_device(d);
+                        i->addDevice(d);
                     },
                     [](shared_ptr<IO<uint32_t>> & i,
                        shared_ptr<Device<uint32_t>> & d)
                     {
-                        i->add_device(d);
+                        i->addDevice(d);
                     },
                     [](shared_ptr<IO<uint64_t>> & i,
                        shared_ptr<Device<uint64_t>> & d)
                     {
-                        i->add_device(d);
+                        i->addDevice(d);
                     },
                     []([[maybe_unused]]auto & i, [[maybe_unused]]auto & d) {}
                 }, io.io, dev.dev);

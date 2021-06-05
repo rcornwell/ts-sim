@@ -62,7 +62,7 @@ class ROM : public Memory<T>
      * @brief Return the size of this chunk of memory.
      * @return size of memory 
      */
-    virtual size_t GetSize() const override
+    virtual size_t getSize() const override
     {
         return this->size_;
     }

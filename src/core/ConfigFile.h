@@ -58,10 +58,6 @@
 
 namespace core {
 
-//using Lexical_error = SimError<1>;
-//using Syntax_error = SimError<2>;
-//using Config_error = SimError<3>;
-
 class Config
 {
 public:

@@ -24,6 +24,7 @@
 #include <string>
 #include <map>
 #include "ConfigOption.h"
+#include "IO.h"
 
 namespace emulator
 {
@@ -62,15 +63,25 @@ public:
 
     std::string name_;
 
-    Device& SetName(const std::string& name)
+    Device& setName(const std::string& name)
     {
         name_ = name;
         return *this;
     }
 
-    const std::string& GetName() const
+    const std::string& getName() const
     {
         return name_;
+    }
+
+    virtual void setIO(IO<T> *io_v)
+    {
+        io = io_v;
+    }
+
+    virtual IO<T> *getIO() const
+    {
+        return io;
     }
 
     virtual void setAddress(size_t addr)
@@ -109,6 +120,17 @@ public:
         return false;
     }
     
+    virtual bool status(T &val, [[maybe_unused]]size_t port)
+    {
+        val = 0;
+        return false;
+    }
+
+    virtual bool command([[maybe_unused]]T val, [[maybe_unused]]size_t port)
+    {
+        return false;
+    }
+
     virtual
     core::ConfigOptionParser options()
     {
@@ -118,6 +140,7 @@ public:
 
 protected:
     size_t addr_;
+    IO<T> *io;
 private:
 };
 }

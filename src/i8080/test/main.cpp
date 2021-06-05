@@ -162,16 +162,16 @@ TEST(CPU, CPUPRE)
     CPU<uint8_t>      *cpu;
     std::shared_ptr<bdos>      io = std::make_shared<bdos>();
     std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
-    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
+    mem->addMemory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
 
     load_mem("8080PRE.COM", mem);
     cpu = new i8080_cpu<I8080>();
     io->cpu = (i8080_cpu<I8080> *)cpu;
     io->mem = mem;
-    cpu->SetMem(mem);
-    cpu->SetIO(io);
+    cpu->setMem(mem);
+    cpu->setIO(io);
     cpu->start();
-    cpu->SetPC(0x100);
+    cpu->setPC(0x100);
 
     mem->Set(0166, 0);    // Inject halt opcode.
 //        mem->write(0323, 5);  // Output
@@ -192,7 +192,7 @@ TEST(CPU, CPUPRE)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
-       auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    auto s = chrono::duration_cast<chrono::seconds>(end - start);
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
@@ -202,6 +202,7 @@ TEST(CPU, CPUPRE)
     delete cpu;
 }
 
+#if 0
 TEST(CPU, CPUExer)
 {
     uint64_t  tim = 0;
@@ -209,16 +210,16 @@ TEST(CPU, CPUExer)
     CPU<uint8_t>      *cpu;
     std::shared_ptr<bdos>      io = std::make_shared<bdos>();
     std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
-    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
-    
+    mem->addMemory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
+
     load_mem("8080EXER.COM", mem);
     cpu = new i8080_cpu<I8080>();
     io->cpu = (i8080_cpu<I8080> *)cpu;
     io->mem = mem;
-    cpu->SetMem(mem);
-    cpu->SetIO(io);
+    cpu->setMem(mem);
+    cpu->setIO(io);
     cpu->start();
-    cpu->SetPC(0x100);
+    cpu->setPC(0x100);
 
     mem->Set(0166, 0);    // Inject halt opcode.
     mem->Set(0323, 5);  // Output
@@ -256,16 +257,16 @@ TEST(CPU, CPU85Exer)
     CPU<uint8_t>      *cpu;
     std::shared_ptr<bdos>      io = std::make_shared<bdos>();
     std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
-    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
+    mem->addMemory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
 
     load_mem("8085EXER.COM", mem);
     cpu = new i8080_cpu<I8085>();
     io->cpu = (i8080_cpu<I8080> *)cpu;
     io->mem = mem;
-    cpu->SetMem(mem);
-    cpu->SetIO(io);
+    cpu->setMem(mem);
+    cpu->setIO(io);
     cpu->start();
-    cpu->SetPC(0x100);
+    cpu->setPC(0x100);
 
     mem->Set(0166, 0);    // Inject halt opcode.
     mem->Set(0323, 5);  // Output
@@ -286,7 +287,7 @@ TEST(CPU, CPU85Exer)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
-       auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    auto s = chrono::duration_cast<chrono::seconds>(end - start);
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
@@ -295,6 +296,7 @@ TEST(CPU, CPU85Exer)
     CHECK_EQUAL (cpu->pc, 1u);
     delete cpu;
 }
+#endif
 
 TEST(CPU, CPUTEST)
 {
@@ -303,16 +305,16 @@ TEST(CPU, CPUTEST)
     CPU<uint8_t>      *cpu;
     std::shared_ptr<bdos>      io = std::make_shared<bdos>();
     std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
-    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
-    
+    mem->addMemory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
+
     load_mem("CPUTEST.COM", mem);
     cpu = new i8080_cpu<I8080>();
     io->cpu = (i8080_cpu<I8080> *)cpu;
     io->mem = mem;
-    cpu->SetMem(mem);
-    cpu->SetIO(io);
+    cpu->setMem(mem);
+    cpu->setIO(io);
     cpu->start();
-    cpu->SetPC(0x100);
+    cpu->setPC(0x100);
 
     mem->Set(0166, 0);    // Inject halt opcode.
 //        mem->write(0323, 5);  // Output
@@ -333,7 +335,7 @@ TEST(CPU, CPUTEST)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
-       auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    auto s = chrono::duration_cast<chrono::seconds>(end - start);
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
@@ -350,16 +352,16 @@ TEST(CPU,TST8080)
     CPU<uint8_t>      *cpu;
     std::shared_ptr<bdos>      io = std::make_shared<bdos>();
     std::shared_ptr<MemFixed<uint8_t>> mem = std::make_shared<MemFixed<uint8_t>>(64*1024, 0);
-    mem->add_memory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
+    mem->addMemory(std::make_shared<RAM<uint8_t>>(64 * 1024, 0));
 
     cpu = new i8080_cpu<I8080>();
     io->cpu = (i8080_cpu<I8080> *)cpu;
     io->mem = mem;
-    cpu->SetMem(mem);
+    cpu->setMem(mem);
     load_mem("TST8080.COM", mem);
-    cpu->SetIO(io);
+    cpu->setIO(io);
     cpu->start();
-    cpu->SetPC(0x100);
+    cpu->setPC(0x100);
 
     mem->Set(0166, 0);    // Inject halt opcode.
 //        mem->write(0323, 5);  // Output
@@ -380,7 +382,7 @@ TEST(CPU,TST8080)
     auto end = chrono::high_resolution_clock::now();
     cout << "Simulated time: " << tim << endl;
     cout << "Excuted: " << n_inst << endl;
-       auto s = chrono::duration_cast<chrono::seconds>(end - start);
+    auto s = chrono::duration_cast<chrono::seconds>(end - start);
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;

@@ -73,7 +73,7 @@ void test_system()
     core::CPU_v      cpu_v = sys->create_cpu("I8080");
     core::MEM_v      ram_v = sys->create_mem("RAM", 62*1024, 0);
     core::MEM_v      rom_v = sys->create_mem("ROM", 2048, 0xf800);
-    core::DEV_v      con_v = sys->create_dev("con");
+    core::DEV_v      con_v = sys->create_dev("2651");
 
     // Get pointers to specific classes, to simplify things.
     shared_ptr<CPU<uint8_t>> cpu = get<shared_ptr<CPU<uint8_t>>>(cpu_v);
@@ -88,18 +88,18 @@ void test_system()
     core::MemInfo    ram_info{ram_v, {"cpu"}};
     core::MemInfo    rom_info{rom_v, {"cpu"}};
     core::DevInfo    con_info{con_v, {}};
-    cpu->SetName("cpu");
+    cpu->setName("cpu");
     // Connect things together.
-    sys->add_cpu(cpu_v);
-    sys->add_memory(ram_info);
-    sys->add_memory(rom_info);
-    sys->add_device(con_info);
+    sys->addCpu(cpu_v);
+    sys->addMemory(ram_info);
+    sys->addMemory(rom_info);
+    sys->addDevice(con_info);
 
     // Load rom with monitor.
     load_mem("gb01.bin", rom_m);
     // Final initialization.
     sys->init();
-    cpu->SetPC(0xf800);
+    cpu->setPC(0xf800);
     sys->start();
     // Inject halt opcode.
     visit([](const auto& obj) {

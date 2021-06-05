@@ -80,7 +80,7 @@ TEST(MemoryTest, Create32) {
 TEST(MemoryTest, Create2) {
     shared_ptr<Memory<uint16_t>> memctl = make_shared<MemFixed<uint16_t>>(4 * 1024, 0);
     shared_ptr<Memory<uint16_t>> mem = make_shared<RAM<uint16_t>>(4 * 1024, 0);
-    memctl->add_memory(mem);
+    memctl->addMemory(mem);
     Memory<uint16_t> *m = memctl.get();
     int    i;
     auto start = chrono::high_resolution_clock::now();
@@ -101,8 +101,8 @@ TEST(MemoryTest, Create3) {
     shared_ptr<Memory<uint16_t>> memctl = make_shared<MemArray<uint16_t>>(64 * 1024, 4096);
     shared_ptr<Memory<uint16_t>> mem = make_shared<RAM<uint16_t>>(32 * 1024, 0);
     shared_ptr<Memory<uint16_t>> mem2 = make_shared<RAM<uint16_t>>(32 * 1024, 32 * 1024);
-    memctl->add_memory(mem);
-    memctl->add_memory(mem2);
+    memctl->addMemory(mem);
+    memctl->addMemory(mem2);
     Memory<uint16_t> *m = memctl.get();
     int    i;
     auto start = chrono::high_resolution_clock::now();

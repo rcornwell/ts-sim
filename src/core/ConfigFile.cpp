@@ -156,27 +156,25 @@ bool Config::parse_cpu()
             p_lexer->advance(false);
             // Should be an identifier.
             if (p_lexer->token() == ConfigToken::Id) {
-                auto caller = [name = p_lexer->token_text()](const auto& obj) {
-                    obj->SetName(name);
-                };
-                std::visit(caller, cpu);
+                std::visit([name = p_lexer->token_text()](const auto& obj) {
+                    obj->setName(name);
+                }, cpu);
             }
             p_lexer->advance();
         }
 
         // Check for an option.
         if (p_lexer->token() == ConfigToken::Rparn) {
-            auto caller = [](const auto& obj) {
+            ConfigOptionParser options = std::visit([](const auto& obj) {
                 return obj->options();
-            };
-            ConfigOptionParser options = std::visit(caller, cpu);
+            }, cpu);
             options.parse(p_lexer);
         }
     } catch (const Lexical_error& e) {
         cout << e.get_message() << endl;
         return false;
     }
-    sys->add_cpu(cpu);
+    sys->addCpu(cpu);
     return true;
 }
 
@@ -224,7 +222,7 @@ bool Config::parse_memory()
             // Should be an identifier.
             if (p_lexer->token() == ConfigToken::Id) {
                 auto caller = [name = p_lexer->token_text()](const auto& obj) {
-                    obj->SetName(name);
+                    obj->setName(name);
                 };
                 std::visit(caller, mem);
             }
@@ -243,7 +241,7 @@ bool Config::parse_memory()
         cout << e.get_message() << endl;
         return false;
     }
-    sys->add_memory(meminfo);
+    sys->addMemory(meminfo);
     return true;
 }
 

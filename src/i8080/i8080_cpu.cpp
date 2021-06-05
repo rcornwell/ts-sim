@@ -624,26 +624,6 @@ void i8080_cpu<MOD>::o_jmp()
 }
 
 template <cpu_model MOD>
-void i8080_cpu<MOD>::o_in()
-{
-    uint8_t data;
-    data = fetch();
-    io->input(regs[A], data);
-}
-
-template <cpu_model MOD>
-void i8080_cpu<MOD>::o_di()
-{
-    ie = false;
-}
-
-template <cpu_model MOD>
-void i8080_cpu<MOD>::o_ei()
-{
-    ie = true;
-}
-
-template <cpu_model MOD>
 void i8080_cpu<MOD>::o_xcht()
 {
     uint8_t data;
@@ -693,6 +673,26 @@ template <cpu_model MOD>
 void i8080_cpu<MOD>::o_sphl()
 {
     sp = regpair<HL>();
+}
+
+template <cpu_model MOD>
+void i8080_cpu<MOD>::o_in()
+{
+    uint8_t data;
+    data = fetch();
+    io->input(regs[A], data);
+}
+
+template <cpu_model MOD>
+void i8080_cpu<MOD>::o_di()
+{
+    ie = false;
+}
+
+template <cpu_model MOD>
+void i8080_cpu<MOD>::o_ei()
+{
+    ie = true;
 }
 
 template <cpu_model MOD>

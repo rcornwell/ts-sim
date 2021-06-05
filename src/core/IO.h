@@ -34,6 +34,9 @@ class CPU;
 
 template<typename T>
 class Memory;
+
+template<typename T>
+class IO;
 };
 
 #include "CPU.h"
@@ -48,14 +51,16 @@ namespace emulator
  * @author rich
  * @date 21/03/21
  * @file IO.h
- * @brief
+ * @brief Abstract class for representing I/O controllers.
  */
-
-
 template<typename T>
 class IO
 {
 public:
+    /**
+     * @brief Default constructor.
+     * @return
+     */
     IO()
     {
     }
@@ -64,64 +69,180 @@ public:
     {
     }
 
-    virtual auto getType() const -> std::string
+    /**
+     * @brief Returns the name of this type of I/O controller.
+     * @return name string.
+     */
+    virtual std::string getType() const
     {
         return "IO";
     }
 
+    /**
+     * @brief Reports the name of this I/O controller.
+     */
     void showModel()
     {
         std::cout << "IO model = " << this->getType() << std::endl;
     }
 
-    std::string name_;
-
-    IO& SetName(const std::string& name)
+    /**
+     * @brief Sets the name of this I/O controller.
+     * @param name Name of controller.
+     * @return self.
+     */
+    IO& setName(const std::string& name)
     {
         name_ = name;
         return *this;
     }
 
-    const std::string& GetName() const
+    /**
+     * @brief Returns the name assigned to this I/O controller.
+     * @return name string.
+     */
+    const std::string& getName() const
     {
         return name_;
     }
 
+    /**
+     * @brief Adds a sub I/O controller to this object.
+     * @param io I/O controller to attach too.
+     */
+    virtual void addIo([[maybe_unused]]std::shared_ptr<IO> io) {};
 
-    virtual void add_io([[maybe_unused]]std::shared_ptr<IO> io) {};
+    /**
+     * @brief Adds a device to the I/O controller. The I/O controller will
+     * query the device to find out where to place it.
+     * @param dev device to attach.
+     */
+    virtual void addDevice([[maybe_unused]]std::shared_ptr<Device<T>> dev) {};
 
-    virtual void add_device([[maybe_unused]]std::shared_ptr<Device<T>> dev) {};
-
-    virtual void set_cpu(CPU<T>* cpu_v)
+    /**
+     * @brief Sets the CPU that this I/O controller is attached to.
+     * @param cpu_v CPU object.
+     */
+    virtual void setCpu(CPU<T>* cpu_v)
     {
         cpu = cpu_v;
     }
 
-    virtual void set_memory(std::shared_ptr<Memory<T>> mem_v)
+    /**
+     * @brief Sets the memory controller this object is attached to. Used for
+     * direct memory transfers between a device and memory.
+     * @param mem_v Memory controller.
+     */
+    virtual void setMemory(std::shared_ptr<Memory<T>> mem_v)
     {
         mem = mem_v;
     }
 
-    virtual void init() {};
-    virtual void shutdown() {};
-    virtual void start() {};
-    virtual void reset() {};
-    virtual void stop() {};
-    virtual void step() {};
-    virtual void run() {};
+    /**
+    * @brief Called after all I/O controllers and Devices have been added.
+    * This should propogate init down to all attached devices and I/O controllers.
+    */
+    virtual void init()
+    {
+        std::cerr << "Init IO()" << std::endl;
+    };
 
+    /**
+     * @brief Called after init but before actually actually running the simulation.
+     * Any last minute initialization should be here.
+     */
+    virtual void start()
+    {
+    };
+
+    /**
+     * @brief Called to reset the the I/O devices. Should propogate to each device.
+     */
+    virtual void reset()
+    {
+    };
+
+    /**
+     * @brief Step one I/O cycle.
+     */
+    virtual void step()
+    {
+    };
+
+    /**
+     * @brief Called when run starts to initialize for continuous operation.
+     */
+    virtual void run()
+    {
+    };
+
+    /**
+     * @brief Called to stop any devices when simulation ends. Or is stopped by the user.
+     */
+    virtual void stop()
+    {
+    };
+
+    /**
+     * @brief Called before simulation ends, to close out any devices.
+     */
+    virtual void shutdown()
+    {
+    };
+
+    /**
+     * @brief Called to transfer data from I/O device to a CPU.
+     * @param val Value to read.
+     * @param port Address of device.
+     * @return true if device exists, false if device does not exist.
+     */
     virtual bool input(T &val, [[maybe_unused]]size_t port)
     {
         val = 0;
         std::cerr << "IO_input " << std::hex << port << std::endl;
         return false;
-    }
+    };
+
+    /**
+     * @brief Called to transfer data from a CPU to a I/O device.
+     * @param val Value to write.
+     * @param port Address of device.
+     * @return true if device exists, false if device does not exist.
+     */
     virtual bool output([[maybe_unused]]T val, [[maybe_unused]]size_t port)
     {
         std::cerr << "IO_output " << std::hex << port << std::endl;
         return false;
     }
 
+    /**
+     * @brief Called to transfer status from I/O device to a CPU. Some simulators may not call this.
+     * @param val Status read read.
+     * @param port Address of device.
+     * @return true if device exists, false if device does not exist.
+     */
+    virtual bool status(T &val, [[maybe_unused]]size_t port)
+    {
+        val = 0;
+        std::cerr << "IO_input " << std::hex << port << std::endl;
+        return false;
+    };
+
+    /**
+     * @brief Called to transfer command from a CPU to a I/O device. Some simulators my not call this.
+     * @param val Value to write.
+     * @param port Address of device.
+     * @return true if device exists, false if device does not exist.
+     */
+    virtual bool command([[maybe_unused]]T val, [[maybe_unused]]size_t port)
+    {
+        std::cerr << "IO_output " << std::hex << port << std::endl;
+        return false;
+    }
+    /**
+     * @brief Configutation options for this I/O controller.
+     * @return set of options.
+     */
     virtual
     core::ConfigOptionParser options()
     {
@@ -130,8 +251,20 @@ public:
     }
 
 protected:
+    /**
+     * @brief Holds a pointer to the CPU who owns this I/O device.
+     */
     CPU<T>* cpu;
+
+    /**
+     * @brief Pointer to memory controller who device can access.
+     */
     std::shared_ptr<Memory<T>> mem;
+
+    /**
+     * @brief Name of controller.
+     */
+    std::string name_;
 
 private:
 
@@ -169,23 +302,6 @@ private:
     static map<string, core::IOFactory *> io_factories; \
     public:
 
-#define REGISTER_IO_FIXED(systype) \
-    namespace core { \
-    class systype##IOFactory : public IOFactory { \
-    public: \
-        systype##IOFactory() \
-        { \
-            std::cout << "Registering IO: " #systype << "\n"; \
-            systype::registerIO(#systype, this); \
-        } \
-        virtual IO_v create() { \
-            return std::make_shared<emulator::##systype##_io>(); \
-        } \
-    }; \
-    static systype##IOFactory global_##systype##IOFactory; \
-    };
-
-
 namespace core
 {
 
@@ -204,10 +320,24 @@ public:
 namespace emulator
 {
 
+/**
+ * @class IO_map
+ * @author rich
+ * @date 04/06/21
+ * @file IO.h
+ * @brief IO_map is a class that handles generic I/O addressing. Where there
+ * is one controller which has a range of addresses.
+ */
 template<typename T>
 class IO_map : public IO<T>
 {
 public:
+    /**
+     * @brief Default constructor.
+     * @param num_devices
+     * @detail IO_map, mantains an array of ports at which various devices can be attached.
+     * Default is to set them to the empty device which returns no access for all operations.
+     */
     IO_map(const size_t num_devices) : max_ports_(num_devices)
     {
         nuldev_ = std::make_shared<Device<T>>();
@@ -219,11 +349,17 @@ public:
     virtual ~IO_map()
     {
         delete[] devices_;
-    }
+    };
 
-    virtual void add_device(std::shared_ptr<Device<T>> dev) override
+    /**
+     * @brief Adds a device to an IO_map
+     * @param dev - device to add.
+     * @detail Asks the device for it's address and how many ports it uses. Then points those ports to the
+     * device. If the device gives an address that is out of range an exception will be thrown.
+     */
+    virtual void addDevice(std::shared_ptr<Device<T>> dev) override
     {
-      //  std::cerr << "Adding device: " << dev->GetName() << " " << std::hex << dev->getAddress() << std::endl;
+        //  std::cerr << "Adding device: " << dev->GetName() << " " << std::hex << dev->getAddress() << std::endl;
         // Later these will throw an exception.
         size_t first_port = dev->getAddress();
         if (first_port > max_ports_)
@@ -234,8 +370,14 @@ public:
         for (size_t i = 0; i < num_ports; i++) {
             devices_[first_port + i] = dev;
         }
+        // Let device know who to talk to for Direct Memory Access.
+        dev->setIO(this);
     };
 
+    /**
+    * @brief Called after all I/O controllers and Devices have been added.
+    * This should propogate init down to all attached devices and I/O controllers.
+    */
     virtual void init() override
     {
         for(size_t i = 0; i < max_ports_; i++) {
@@ -243,6 +385,10 @@ public:
         };
     };
 
+    /**
+     * @brief Called after init but before actually actually running the simulation.
+     * Any last minute initialization should be here.
+     */
     virtual void start() override
     {
         for(size_t i = 0; i < max_ports_; i++) {
@@ -250,30 +396,49 @@ public:
         };
     };
 
+    /**
+     * @brief Called to reset the the I/O devices. Should propogate to each device.
+     */
     virtual void reset() override
     {
         for(size_t i = 0; i < max_ports_; i++) {
             devices_[i]->reset();
         };
     };
-    virtual void stop() override
-    {
-        for(size_t i = 0; i < max_ports_; i++) {
-            devices_[i]->stop();
-        };
-    };
+
+    /**
+     * @brief Step one I/O cycle.
+     */
     virtual void step() override
     {
         for(size_t i = 0; i < max_ports_; i++) {
             devices_[i]->step();
         };
     };
+
+    /**
+     * @brief Called when run starts to initialize for continuous operation.
+     */
     virtual void run() override
     {
         for(size_t i = 0; i < max_ports_; i++) {
             devices_[i]->run();
         };
     };
+
+    /**
+     * @brief Called to stop any devices when simulation ends. Or is stopped by the user.
+     */
+    virtual void stop() override
+    {
+        for(size_t i = 0; i < max_ports_; i++) {
+            devices_[i]->stop();
+        };
+    };
+
+    /**
+     * @brief Called before simulation ends, to close out any devices.
+     */
     virtual void shutdown() override
     {
         for(size_t i = 0; i < max_ports_; i++) {
@@ -281,25 +446,76 @@ public:
         };
     };
 
+    /**
+     * @brief Called to transfer data from I/O device to a CPU.
+     * @param val Value to read.
+     * @param port Address of device.
+     * @return true if device exists, false if device does not exist.
+     */
     virtual bool input(T &val, size_t port) override
     {
         if (port > max_ports_)
             return false;
-       // std::cerr << "IOInput()" << std::hex << port << std::endl;
+        // std::cerr << "IOInput()" << std::hex << port << std::endl;
         return devices_[port]->input(val, port);
-    }
+    };
 
+    /**
+      * @brief Called to transfer data from a CPU to a I/O device.
+      * @param val Value to write.
+      * @param port Address of device.
+      * @return true if device exists, false if device does not exist.
+      */
     virtual bool output(T val, size_t port) override
     {
         if (port > max_ports_)
             return false;
-       // std::cerr << "IOOutput()" << std::hex << port << std::endl;
+        // std::cerr << "IOOutput()" << std::hex << port << std::endl;
         return devices_[port]->output(val, port);
-    }
+    };
 
-private:
+    /**
+     * @brief Called to transfer status from I/O device to a CPU.
+     * @param val Status read read.
+     * @param port Address of device.
+     * @return true if device exists, false if device does not exist.
+     */
+    virtual bool status(T &val, size_t port) override
+    {
+        if (port > max_ports_)
+            return false;
+        // std::cerr << "IOInput()" << std::hex << port << std::endl;
+        return devices_[port]->status(val, port);
+    };
+
+    /**
+     * @brief Called to transfer command from a CPU to a I/O device.
+     * @param val Value to write.
+     * @param port Address of device.
+     * @return true if device exists, false if device does not exist.
+     */
+    virtual bool command(T val, size_t port) override
+    {
+        if (port > max_ports_)
+            return false;
+        // std::cerr << "IOOutput()" << std::hex << port << std::endl;
+        return devices_[port]->command(val, port);
+    };
+
+    private:
+    /**
+     * @brief Holds the maximum number of I/O ports that this I/O controller can handle.
+     */
     size_t max_ports_;
+
+    /**
+      * @brief Default device, should return non-accesable for all accesses attempted.
+      */
     std::shared_ptr<Device<T>> nuldev_;
+
+    /**
+     * @brief Array of devices to access.
+     */
     std::shared_ptr<Device<T>> *devices_;
 };
 }

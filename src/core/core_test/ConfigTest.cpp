@@ -156,8 +156,7 @@ TEST_GROUP(Config) {
         CHECK(conf(ist));
         CHECK_EQUAL(conf.sys->number_cpus(), 1u);
         core::CPU_v& cpu_v = conf.sys->cpus[0];
-        auto caller = [](const auto& obj) { return obj->GetName(); };
-        string name = std::visit(caller, cpu_v);
+        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
         CHECK_EQUAL(name, "hello");
         std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
                 std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
@@ -172,8 +171,7 @@ TEST_GROUP(Config) {
         string ist{"system test cpu s2:hello2() "};
         CHECK(conf(ist));
         core::CPU_v& cpu_v = conf.sys->cpus[0];
-        auto caller = [](const auto& obj) { return obj->GetName(); };
-        string name = std::visit(caller, cpu_v);
+        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
         CHECK_EQUAL(name, "hello2");
         std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
                 std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
@@ -188,8 +186,7 @@ TEST_GROUP(Config) {
         string ist{"system test cpu s1:opt_hello(timer,home=055) "};
         CHECK(conf(ist));
         core::CPU_v& cpu_v = conf.sys->cpus[0];
-        auto caller = [](const auto& obj) { return obj->GetName(); };
-        string name = std::visit(caller, cpu_v);
+        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
         CHECK_EQUAL(name, "opt_hello");
         std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
                 std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
@@ -206,8 +203,7 @@ TEST_GROUP(Config) {
         CHECK(conf(ist));
         CHECK(conf(ist2));
         core::CPU_v& cpu_v = conf.sys->cpus[0];
-        auto caller = [](const auto& obj) { return obj->GetName(); };
-        string name = std::visit(caller, cpu_v);
+        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
         CHECK_EQUAL(name, "opt_hello");
         std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
                 std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
@@ -227,8 +223,7 @@ TEST_GROUP(Config) {
         CHECK(conf(ist2));
         CHECK(conf(ist3));
         core::CPU_v& cpu_v = conf.sys->cpus[0];
-        auto caller = [](const auto& obj) { return obj->GetName(); };
-        string name = std::visit(caller, cpu_v);
+        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
         CHECK_EQUAL(name, "opt_hello");
         std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
                 std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);

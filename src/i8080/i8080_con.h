@@ -19,6 +19,7 @@
 
 #pragma once
 
+//#include "Console.h"
 #include "Device.h"
 
 #define DATA_PORT      0
@@ -89,18 +90,18 @@
 namespace emulator
 {
 
-class i8080_con : public Device<uint8_t>
+class i8080_2651 : public Device<uint8_t>
 {
 public:
-    i8080_con() : Device()
+    i8080_2651() : Device()
     {
     }
 
-    i8080_con(const std::string &name) : Device(name)
+    i8080_2651(const std::string &name) : Device(name)
     {
     }
 
-    virtual ~i8080_con()
+    virtual ~i8080_2651()
     {
     }
 
@@ -205,4 +206,4 @@ private:
 
 }
 
-REGISTER_DEVICE(i8080, con)
+REGISTER_DEVICE(i8080, 2651)

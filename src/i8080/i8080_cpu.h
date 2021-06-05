@@ -404,9 +404,9 @@ public:
                                           ((size_t)(64*1024), (size_t)page_size);
         std::shared_ptr<IO<uint8_t>> ioctl =
                                       std::make_shared<IO_map<uint8_t>>(256u);
-        ioctl->SetName("i8080IO");
-        SetMem(memctl);
-        SetIO(ioctl);
+        ioctl->setName("i8080IO");
+        setMem(memctl);
+        setIO(ioctl);
     };
 
     virtual void shutdown() override

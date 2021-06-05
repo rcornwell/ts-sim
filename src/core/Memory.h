@@ -68,7 +68,7 @@ public:
      * @param name New name to set.
      * @return
      */
-    Memory& SetName(const std::string& name)
+    Memory& setName(const std::string& name)
     {
         name_ = name;
         return *this;
@@ -78,7 +78,7 @@ public:
      * @brief Returns the name of the object.
      * @return
      */
-    const std::string& GetName() const
+    const std::string& getName() const
     {
         return name_;
     }
@@ -87,7 +87,7 @@ public:
       * @brief Returns size of memory in T units.
       * @return
       */
-    virtual size_t GetSize() const
+    virtual size_t getSize() const
     {
         return tot_size_;
     }
@@ -96,7 +96,7 @@ public:
       * @brief Returns base index of memory in T units.
       * @return
       */
-    virtual size_t GetBase() const
+    virtual size_t getBase() const
     {
         return base_;
     }
@@ -105,7 +105,7 @@ public:
      * @brief Sets the base index for this memory object in T units.
      * @param base - base index.
      */
-    virtual void SetBase(size_t base)
+    virtual void setBase(size_t base)
     {
         base_ = base;
     }
@@ -116,7 +116,7 @@ public:
      *        into regions.
      * @param mem - Memory object to attach.
      */
-    virtual void add_memory([[maybe_unused]]std::shared_ptr<Memory> mem) {};
+    virtual void addMemory([[maybe_unused]]std::shared_ptr<Memory> mem) {};
 
     /**
      * @brief Adds options to this CPU module.
@@ -249,7 +249,7 @@ public:
      * @brief Returns size of memory in T units.
      * @return
      */
-    virtual size_t GetSize() const override
+    virtual size_t getSize() const override
     {
         return this->size_;
     }
@@ -258,13 +258,13 @@ public:
      * @brief Sets the memory that this controller will access.
      * @param mem New memory module.
      */
-    virtual void add_memory(std::shared_ptr<Memory<T>> mem) override
+    virtual void addMemory(std::shared_ptr<Memory<T>> mem) override
     {
         mem_ = mem;
         rmem_ = mem_.get();
         // Update base and size from module.
-        this->size_ = mem_->GetSize();
-        this->base_ = mem_->GetBase();
+        this->size_ = mem_->getSize();
+        this->base_ = mem_->getBase();
     }
 
     /**
@@ -384,7 +384,7 @@ public:
      * @brief Returns size of memory in T units.
      * @return
      */
-    virtual size_t GetSize() const override
+    virtual size_t getSize() const override
     {
         return this->size_;
     }
@@ -394,7 +394,7 @@ public:
      *         Note base is always 0 for Array memory.
      * @return
      */
-    virtual size_t GetBase() const override
+    virtual size_t getBase() const override
     {
         return 0;
     }
@@ -403,17 +403,17 @@ public:
      * @brief Sets the base, no - op for MemArray.
      * @param base
      */
-    virtual void SetBase([[maybe_unused]]size_t base) override {  }
+    virtual void setBase([[maybe_unused]]size_t base) override {  }
 
     /**
      * @brief Add a region of memory to the array.
      *        Pointers to subregions are duplicated.
      * @param mem - Memory to add.
      */
-    virtual void add_memory(std::shared_ptr<Memory<T>> mem) override
+    virtual void addMemory(std::shared_ptr<Memory<T>> mem) override
     {
-        size_t base_address = mem->GetBase() >> shift_;
-        size_t top_address = (mem->GetSize() >> shift_) + base_address;
+        size_t base_address = mem->getBase() >> shift_;
+        size_t top_address = (mem->getSize() >> shift_) + base_address;
         for (size_t i = base_address; i < top_address; i++) {
             mem_[i] = mem;
         }
@@ -431,7 +431,7 @@ public:
 
         // Make sure in range and access it.
         if (index < this->size_) 
-            mem_[base]->Get(val, index - mem_[base]->GetBase());
+            mem_[base]->Get(val, index - mem_[base]->getBase());
         else
             throw Access_error{"Invalid memory location"};
     }
@@ -445,7 +445,7 @@ public:
     {
        size_t base = index >> shift_;
         if (index < this->size_)
-            return mem_[base]->Set(val, index - mem_[base]->GetBase());
+            return mem_[base]->Set(val, index - mem_[base]->getBase());
         else
             throw Access_error{"Invalid memory location"};
     }
@@ -465,7 +465,7 @@ public:
 
         // Make sure in range and access it.
         if (index < this->size_) 
-            return mem_[base]->read(val, index - mem_[base]->GetBase());
+            return mem_[base]->read(val, index - mem_[base]->getBase());
         val = 0;
         return false;
     };
@@ -482,7 +482,7 @@ public:
     {
         size_t base = index >> shift_;
         if (index < this->size_)
-            return mem_[base]->write(val, index - mem_[base]->GetBase());
+            return mem_[base]->write(val, index - mem_[base]->getBase());
         return false;
     };
 

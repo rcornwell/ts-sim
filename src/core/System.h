@@ -135,29 +135,29 @@ public:
         return factories[name]->create();
     }
     
-    void add_cpu(CPU_v cpu)
+    void addCpu(CPU_v cpu)
     {
         this->cpus.push_back(cpu);
     }
     
-    CPU_v& get_cpu(size_t number)
+    CPU_v& getCpu(size_t number)
     {
         if (this->cpus.size() > number)
             throw SystemError{"Not defined"};
         return this->cpus.at(number);
     }
     
-    void add_memory(MemInfo mem)
+    void addMemory(MemInfo mem)
     {
         this->memories.push_back(mem);
     }
     
-    void add_io(IOInfo io)
+    void addIo(IOInfo io)
     {
         this->io_ctrl.push_back(io);
     }
     
-    void add_device(DevInfo dev)
+    void addDevice(DevInfo dev)
     {
         this->devices.push_back(dev);
     }
