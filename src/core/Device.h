@@ -86,17 +86,17 @@ public:
 
     virtual void setAddress(size_t addr)
     {
-	    addr_ = addr;
+        addr_ = addr;
     }
 
     virtual size_t getAddress() const
     {
-	    return addr_;
+        return addr_;
     }
 
     virtual size_t getSize() const
     {
-	    return 1;
+        return 1;
     }
     
     virtual void init() {}

@@ -84,6 +84,9 @@ void test_system()
     visit([](const auto& obj) {
         obj->setAddress(0x5c);
     }, con_v);
+    shared_ptr<Device<uint8_t>> con = get<shared_ptr<Device<uint8_t>>>(con_v);
+    shared_ptr<i8080_2651> con_m = dynamic_pointer_cast<i8080_2651>(con);
+    con_m->setCPU(cpu);
     // Set the names on the objects.
     core::MemInfo    ram_info{ram_v, {"cpu"}};
     core::MemInfo    rom_info{rom_v, {"cpu"}};
@@ -112,7 +115,11 @@ void test_system()
         n_inst++;
     }
     cout << endl;
+    cerr << "Stoping system " << endl;
     cpu->stop();
+    cerr << "Shutting down system "<< endl;
+    cpu->shutdown();
+    cerr << "Exit" << endl;
 }
 
 int main(int argc, char **argv)

@@ -203,6 +203,10 @@ void System::init()
     // Lastly call init on all IO controllers. These will then call init
     // on all attached devices. Which will intern init all attached units.
     for(auto &io : io_ctrl ) {
+            string name = visit([](const auto& obj) {
+                return obj->getName();
+            }, io.io);
+            cerr << "Init(" << name << ")" << endl;
         visit([](const auto& obj) {
             obj->init();
         }, io.io);
@@ -221,7 +225,7 @@ void System::start()
         std::visit(caller, cpu);
     }
 }
- 
+
 
 
 

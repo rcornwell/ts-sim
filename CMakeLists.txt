@@ -11,6 +11,8 @@ set (${PROJECT_NAME}_VERSION_MINOR 0)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules
                       ${CMAKE_MODULE_PATH})
 
+find_package (Threads)
+
 # Generate Doxygen documentation files
 option(BUILD_DOC "Build documenation" ON)
 option(RUN_TESTS "Run tests" ON)
@@ -80,6 +82,7 @@ FILE(GLOB I8080_SRCS "src/i8080/i8080_system.cpp" "src/i8080/i8080_cpu.cpp")
 #add_dependencies(i8080 corelib)
 add_executable(i8080 ${I8080_SRCS} src/i8080/main.cpp)
 target_link_libraries(i8080 corelib)
+target_link_libraries(i8080 ${CMAKE_THREAD_LIBS_INIT})
 
 if (RUN_TESTS) 
 add_executable(i8080_test ${I8080_SRCS} src/i8080/test/main.cpp)

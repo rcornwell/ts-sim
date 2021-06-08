@@ -380,7 +380,7 @@ public:
     */
     virtual void init() override
     {
-        for(size_t i = 0; i < max_ports_; i++) {
+        for(size_t i = 0; i < max_ports_; i += devices_[i]->getSize() ) {
             devices_[i]->init();
         };
     };
@@ -391,7 +391,7 @@ public:
      */
     virtual void start() override
     {
-        for(size_t i = 0; i < max_ports_; i++) {
+        for(size_t i = 0; i < max_ports_; i += devices_[i]->getSize() ) {
             devices_[i]->start();
         };
     };
@@ -401,7 +401,7 @@ public:
      */
     virtual void reset() override
     {
-        for(size_t i = 0; i < max_ports_; i++) {
+        for(size_t i = 0; i < max_ports_; i += devices_[i]->getSize() ) {
             devices_[i]->reset();
         };
     };
@@ -411,7 +411,7 @@ public:
      */
     virtual void step() override
     {
-        for(size_t i = 0; i < max_ports_; i++) {
+        for(size_t i = 0; i < max_ports_; i += devices_[i]->getSize() ) {
             devices_[i]->step();
         };
     };
@@ -421,7 +421,7 @@ public:
      */
     virtual void run() override
     {
-        for(size_t i = 0; i < max_ports_; i++) {
+        for(size_t i = 0; i < max_ports_; i += devices_[i]->getSize() ) {
             devices_[i]->run();
         };
     };
@@ -431,7 +431,7 @@ public:
      */
     virtual void stop() override
     {
-        for(size_t i = 0; i < max_ports_; i++) {
+        for(size_t i = 0; i < max_ports_; i += devices_[i]->getSize() ) {
             devices_[i]->stop();
         };
     };
@@ -441,7 +441,7 @@ public:
      */
     virtual void shutdown() override
     {
-        for(size_t i = 0; i < max_ports_; i++) {
+        for(size_t i = 0; i < max_ports_; i += devices_[i]->getSize() ) {
             devices_[i]->shutdown();
         };
     };

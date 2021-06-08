@@ -19,7 +19,8 @@
 
 #pragma once
 
-//#include "Console.h"
+#include "Event.h"
+#include "Console.h"
 #include "Device.h"
 
 #define DATA_PORT      0
@@ -110,8 +111,19 @@ public:
         return 4;
     }
 
-    //virtual void init() {}
-    //virtual void shutdown() {}
+    virtual void init() {
+        con = core::Console::getInstance();
+        con->init();
+        send_char = con->getSendChar();
+        core::Console_reader *rdr = new core::Console_reader(this, &recv_ch);
+        con->addReadChar(rdr);
+    }
+
+    virtual void shutdown()
+    {
+        con->shutdown();
+    }
+
     //virtual void start() {}
     virtual void reset()
     {
@@ -129,36 +141,46 @@ public:
 
     virtual bool input(uint8_t &val, size_t port) override
     {
-        switch (port - addr_) {
+        switch ((int)(port - addr_) & 0x3) {
         case DATA_PORT:
             // Return read character.
-            val = 0;
+            val = recv_buff;
+            recv_full = false;
             break;
+
         case STATUS_PORT:
             val = status_;
+            if (recv_full)
+                val |= RxRDY;
+            if (over_run)
+                val |= RxOVER;
             break;
+
         case MODE_PORT:
             val = (mode_ptr_) ? mode2_ : mode1_;
             mode_ptr_ = !mode_ptr_;
             break;
+
         case CMD_PORT:
             val = cmd_;
             break;
+
         default:
             val = 0;
             return false;
         }
-      //  std::cerr << "Input(" << std::hex << val << ", " << std::hex << port << ")" << std::endl;
         return true;
     }
 
     virtual bool output(uint8_t val, size_t port) override
     {
-    //    std::cerr << "Output(" << std::hex << val << ", " << std::hex << port << ")" << std::endl;
-        switch (port - addr_) {
+        char ch;
+        switch ((int)(port - addr_) & 0x3) {
         case DATA_PORT:
             // transmit character.
-            std::cout << val << std::flush;
+            //std::cout << val << std::flush;
+            ch = (char)val;
+            send_char->notify((void *)&ch);
             break;
         case STATUS_PORT:
             // Write syn1/syn2/dle characters.
@@ -175,6 +197,7 @@ public:
             mode_ptr_ = false;
             if (cmd_ & RESET) {
                 status_ &= (~RxPE|RxOVER|RxFE);
+                over_run = false;
             }
             if (cmd_ & TRAN_ENABLE) {
                 // Enable transmitter.
@@ -195,13 +218,39 @@ public:
         core::ConfigOptionParser option("Device Options");
         return option;
     }
-private:
 
+    void setCPU(shared_ptr<CPU<uint8_t>> cpu_)
+    {
+        cpu = cpu_;
+    }
+    shared_ptr<CPU<uint8_t>> cpu;
+
+    static void recv_ch(void *obj, void *ev)
+    {
+        char ch = *((char *)ev);
+        i8080_2651 *o = (i8080_2651 *)obj;
+        if (ch == 03) {
+            o->cpu->running = false;
+            return;
+        }
+        o->recv_buff = ch;
+        if (o->recv_full)
+            o->over_run = true;
+        o->recv_full = true;
+    }
+
+    private:
+    core::Console       *con;
+    core::Event         *send_char;
+    core::Console_reader *recv_char;
     uint8_t     mode1_;
     uint8_t     mode2_;
     bool        mode_ptr_ = false;
     uint8_t     cmd_;
     uint8_t     status_;
+    uint8_t     recv_buff;
+    bool        recv_full;
+    bool        over_run;
 };
 
 }

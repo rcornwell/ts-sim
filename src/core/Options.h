@@ -39,9 +39,9 @@ namespace option
 * @brief defines type of argument for each option.
 */
 enum class Argument {
-    no = 0,		// option never takes an argument
-    required,	// option always take oargemnet
-    optional	// option can take an argument
+    no = 0,     // option never takes an argument
+    required,   // option always take oargemnet
+    optional    // option can take an argument
 };
 
 /**
