@@ -19,6 +19,7 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <iomanip>
 #include <utility>
 #include "i8080_cpu.h"
 #include "i8080_system.h"
@@ -95,7 +96,8 @@ inline uint8_t i8080_cpu<MOD>::flag_gen(uint8_t v)
 {
     if constexpr (MOD == I8085)
         return flag_table[v];
-    return flag_table[v] | VFLG;
+    else
+        return flag_table[v] | VFLG;
 }
 
 template <cpu_model MOD>
@@ -972,7 +974,7 @@ string i8080_cpu<MOD>::disassemble(uint8_t ir, uint16_t addr, int &len)
             break;
     }
     if (op->name == "") {
-        temp << std::hex << ir;
+        temp << hex << internal << setw(2) << setfill('0') << (unsigned int)(ir) << " ";
         return temp.str();
     }
     switch(op->type) {
@@ -1028,12 +1030,13 @@ template <cpu_model MOD>
 string i8080_cpu<MOD>::dumpregs(uint8_t regs[8])
 {
     int i;
-    char  s[4];
     stringstream temp;
 
     for(i = 0; i < 8; i++) {
-        sprintf(s, "%02x", regs[i]);
-        temp << reg_names[i] << "=" << s << " ";
+        if (i == M)
+            continue;
+        temp << reg_names[i] << "=";
+        temp << hex << internal << setw(2) << setfill('0') << (unsigned int)(regs[i]) << " ";
     }
     return temp.str();
 }
@@ -1046,19 +1049,16 @@ void emulator::i8080_cpu<MOD>::trace()
     uint8_t   ir;
     uint8_t   t;
     int       len;
-    char      pc_str[6];
-    char      psw_str[6];
 
     mem->read(ir, pc);
     mem->read(t, pc+1);
     addr = t;
     mem->read(t, pc+2);
     addr |= (t << 8);
-    sprintf(pc_str, "%04x", (uint32_t)(pc & 0xffff));
-    sprintf(psw_str, "%02x", PSW);
-    cout << pc_str << " " << psw_str << " " << disassemble(ir, addr, len) << endl;
-    sprintf(pc_str, "%04x", sp);
-    cout << dumpregs(regs) << "SP=" << pc_str << endl;
+    cout << dumpregs(regs) << "SP=" << hex << internal << setfill('0') << setw(4) << sp << " ";
+    cout << hex << internal << setfill('0') << setw(4) << pc << " ";
+    cout << hex << internal << setfill('0') << setw(2) << (unsigned int)(PSW) << " ";
+    cout << disassemble(ir, addr, len) << endl;
 }
 
 template class i8080_cpu<I8080>;

@@ -271,7 +271,11 @@ private:
 };
 }
 
-
+/**
+ * \def Used to define a IO device.
+ * @brief Classes should be names of the format:
+ *  systemtype_model.
+ */
 #define REGISTER_IO(systype, model) \
     namespace core { \
     class model##IOFactory : public IOFactory { \
@@ -335,7 +339,7 @@ public:
     /**
      * @brief Default constructor.
      * @param num_devices
-     * @detail IO_map, mantains an array of ports at which various devices can be attached.
+     * @details IO_map, mantains an array of ports at which various devices can be attached.
      * Default is to set them to the empty device which returns no access for all operations.
      */
     IO_map(const size_t num_devices) : max_ports_(num_devices)
@@ -354,7 +358,7 @@ public:
     /**
      * @brief Adds a device to an IO_map
      * @param dev - device to add.
-     * @detail Asks the device for it's address and how many ports it uses. Then points those ports to the
+     * @details Asks the device for it's address and how many ports it uses. Then points those ports to the
      * device. If the device gives an address that is out of range an exception will be thrown.
      */
     virtual void addDevice(std::shared_ptr<Device<T>> dev) override
@@ -509,13 +513,15 @@ public:
     size_t max_ports_;
 
     /**
+      * @var
       * @brief Default device, should return non-accesable for all accesses attempted.
       */
     std::shared_ptr<Device<T>> nuldev_;
 
     /**
-     * @brief Array of devices to access.
-     */
+      * @var 
+      * @brief Array of devices to access.
+      */
     std::shared_ptr<Device<T>> *devices_;
 };
 }

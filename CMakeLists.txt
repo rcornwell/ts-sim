@@ -11,8 +11,6 @@ set (${PROJECT_NAME}_VERSION_MINOR 0)
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/modules
                       ${CMAKE_MODULE_PATH})
 
-find_package (Threads)
-
 # Generate Doxygen documentation files
 option(BUILD_DOC "Build documenation" ON)
 option(RUN_TESTS "Run tests" ON)
@@ -67,8 +65,14 @@ else()
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
 
+# Get required files and packages
+find_package (Threads)
 include(CheckIncludeFiles)
 check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files(termio.h HAVE_TERMIO_H)
+if (NOT HAVE_TERMIO_H)
+   check_include_files(termios.h HAVE_TERMIOS_H)
+endif()
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 include_directories(BEFORE ${CMAKE_CURRENT_BINARY_DIR})

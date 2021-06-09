@@ -27,11 +27,19 @@
 
 #pragma once
 
+#if (defined(__linux) || defined(__linux__))
+#ifdef HAVE_TERMIO_H
 #include <termio.h>
-#include <unistd.h>
-#include <signal.h>
+#endif
+#ifdef HAVE_TERMIOS_H
+#include <termios.h>
+#endif
 #include <fcntl.h>
 #include <sys/types.h>
+#endif
+#if (defined(_WIN32) || defined(_WIN64))
+#include <windows.h>
+#endif
 #include <thread>
 #include "Event.h"
 
@@ -99,6 +107,7 @@ public:
             running = false;
             // Kill running thread.
             thrd->join();
+#if (defined(__linux) || defined(__linux__))
             if (term_saved) {
                 int t;
                 if ((t = tcsetattr(term, TCSANOW, &save_termios)) < 0) {
@@ -108,6 +117,7 @@ public:
                     term_saved = false;
                 }
             }
+#endif
         }
         delete send_char;
         delete recv_char;
@@ -124,15 +134,16 @@ public:
 
     void init()
     {
+#if (defined(__linux) || defined(__linux__))
         struct termios  buf;
 
+        if (term_saved)
+            return;
         term = open("/dev/tty", O_ASYNC|O_NONBLOCK|O_RDWR);
         if (term < 0)
             return;
-        if (!term_saved) {
-            if (tcgetattr(term, &save_termios) < 0) /* get the original state */
-                return;
-        }
+        if (tcgetattr(term, &save_termios) < 0) /* get the original state */
+            return;
 
         if (tcgetattr(term, &buf) < 0) /* get the original state */
             return;
@@ -161,6 +172,7 @@ public:
         if (tcsetattr(term, TCSANOW, &buf) >= 0) {
             term_saved = true;
         }
+#endif
 
         // Create a thread.
         if (!running) {
@@ -228,8 +240,9 @@ public:
             // Kill running thread.
             thrd->join();
         }
-        int t;
+#if (defined(__linux) || defined(__linux__))
         if (term_saved) {
+            int t;
             if ((t = tcsetattr(term, TCSANOW, &save_termios)) < 0) {
                 std::cerr << "Set failed " << t << " " << errno << std::endl;
             } else {
@@ -237,6 +250,7 @@ public:
                 close(term);
             }
         }
+#endif
     }
 
     void show_char(void *ch)
@@ -257,8 +271,10 @@ private:
     Event            *cmd_r_char;
     Event            *wru_event;
     Event            *attn_event;
+#if (defined(__linux) || defined(__linux__))
     struct termios   save_termios;
     bool             term_saved = false;  // Terminal settings saved.
+#endif
     bool             running = false;     // Input thread running.
     bool             use_stdin = false;   // Input via stdin rather then term.
     int              term;                // Input file handle.

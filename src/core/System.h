@@ -174,7 +174,14 @@ public:
 
     std::vector<DevInfo> devices;
 
-private:
+    private:
+
+    void attachMemory(CPU_v &cpu, MEM_v& mem);
+
+    void attachIO(CPU_v & cpu, IO_v & io);
+
+    void attachDevice(IO_v & io, DEV_v & dev);
+
     static std::map<std::string, SystemFactory *> factories;
 };
 

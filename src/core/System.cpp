@@ -25,11 +25,6 @@ namespace core
 using namespace std;
 using namespace emulator;
 
-template<class... Ts> struct overload : Ts... {
-    using Ts::operator()...;
-};
-template<class... Ts> overload(Ts...) -> overload<Ts...>;
-
 void System::init()
 {
     // First call init on all CPU's.
@@ -50,17 +45,17 @@ void System::init()
         if (need_io) {
             // Get the IO controller for this CPU.
             IOInfo info{};
-            IO_v io_ctrl = visit([](const auto& obj) {
+            IO_v io_ctrl_ = visit([](const auto& obj) {
                 return obj->getIO();
             }, cpu);
-            info.io = io_ctrl;
+            info.io = io_ctrl_;
             info.cpu_names.push_back(name);
             info.added = true;
             // Add it in, but flag as added.
             addIo(info);
             string io_name = visit([](const auto& obj) {
                 return obj->getName();
-            }, io_ctrl);
+            }, io_ctrl_);
             cerr << "CPU IO: " << io_name << endl;
         }
     }
@@ -77,30 +72,7 @@ void System::init()
             if (mem.cpu_names.size() == 0 ||
                 find(mem.cpu_names.begin(), mem.cpu_names.end(), name)
                 != mem.cpu_names.end()) {
-                // Assign memory based on type match
-                visit(overload{
-                    [](shared_ptr<CPU<uint8_t>> & c,
-                       shared_ptr<Memory<uint8_t>> & m)
-                    {
-                        c->addMemory(m);
-                    },
-                    [](shared_ptr<CPU<uint16_t>> & c,
-                       shared_ptr<Memory<uint16_t>> & m)
-                    {
-                        c->addMemory(m);
-                    },
-                    [](shared_ptr<CPU<uint32_t>> & c,
-                       shared_ptr<Memory<uint32_t>> & m)
-                    {
-                        c->addMemory(m);
-                    },
-                    [](shared_ptr<CPU<uint64_t>> & c,
-                       shared_ptr<Memory<uint64_t>> & m)
-                    {
-                        c->addMemory(m);
-                    },
-                    []([[maybe_unused]]auto & c, [[maybe_unused]]auto & m) {}
-                }, cpu, mem.mem);
+                attachMemory(cpu, mem.mem);
             }
         }
     }
@@ -121,30 +93,8 @@ void System::init()
             if (io.cpu_names.size() == 0 ||
                 find(io.cpu_names.begin(), io.cpu_names.end(), name)
                 != io.cpu_names.end()) {
-                // Assign memory based on type match
-                visit(overload{
-                    [](shared_ptr<CPU<uint8_t>> & c,
-                       shared_ptr<IO<uint8_t>> & i)
-                    {
-                        c->addIo(i);
-                    },
-                    [](shared_ptr<CPU<uint16_t>> & c,
-                       shared_ptr<IO<uint16_t>> & i)
-                    {
-                        c->addIo(i);
-                    },
-                    [](shared_ptr<CPU<uint32_t>> & c,
-                       shared_ptr<IO<uint32_t>> & i)
-                    {
-                        c->addIo(i);
-                    },
-                    [](shared_ptr<CPU<uint64_t>> & c,
-                       shared_ptr<IO<uint64_t>> & i)
-                    {
-                        c->addIo(i);
-                    },
-                    []([[maybe_unused]]auto & c, [[maybe_unused]]auto & i) {}
-                }, cpu, io.io);
+                // Assign IO based on type match
+                attachIO(cpu, io.io);
             }
         }
     }
@@ -158,7 +108,9 @@ void System::init()
 
     // Now attach devices to their I/O controllers.
     for(auto &dev : devices ) {
-        string dev_name = visit([](const auto& obj) { return obj->getName(); }, dev.dev);
+        string dev_name = visit([](const auto& obj) {
+            return obj->getName();
+        }, dev.dev);
         // See if this CPU matches the names vector.
         for (auto &io : io_ctrl ) {
             // Grab name of this IO controller.
@@ -170,30 +122,8 @@ void System::init()
                 find(dev.io_names.begin(), dev.io_names.end(), name)
                 != dev.io_names.end()) {
                 cerr << " Adding device: " << dev_name << " to " << name << endl;
-                // Assign memory based on type match
-                visit(overload{
-                    [](shared_ptr<IO<uint8_t>> & i,
-                       shared_ptr<Device<uint8_t>> & d)
-                    {
-                        i->addDevice(d);
-                    },
-                    [](shared_ptr<IO<uint16_t>> & i,
-                       shared_ptr<Device<uint16_t>> & d)
-                    {
-                        i->addDevice(d);
-                    },
-                    [](shared_ptr<IO<uint32_t>> & i,
-                       shared_ptr<Device<uint32_t>> & d)
-                    {
-                        i->addDevice(d);
-                    },
-                    [](shared_ptr<IO<uint64_t>> & i,
-                       shared_ptr<Device<uint64_t>> & d)
-                    {
-                        i->addDevice(d);
-                    },
-                    []([[maybe_unused]]auto & i, [[maybe_unused]]auto & d) {}
-                }, io.io, dev.dev);
+                // Assign Device based on type match
+                attachDevice(io.io, dev.dev);
             }
         }
     }
@@ -203,10 +133,10 @@ void System::init()
     // Lastly call init on all IO controllers. These will then call init
     // on all attached devices. Which will intern init all attached units.
     for(auto &io : io_ctrl ) {
-            string name = visit([](const auto& obj) {
-                return obj->getName();
-            }, io.io);
-            cerr << "Init(" << name << ")" << endl;
+        string name = visit([](const auto& obj) {
+            return obj->getName();
+        }, io.io);
+        cerr << "Init(" << name << ")" << endl;
         visit([](const auto& obj) {
             obj->init();
         }, io.io);
@@ -220,13 +150,116 @@ void System::start()
     // Call start on all CPU's.
     for(auto &cpu : cpus ) {
         auto caller = [](const auto& obj) {
-                      obj->start();
+            obj->start();
         };
         std::visit(caller, cpu);
     }
 }
 
 
+void System::attachMemory(CPU_v & cpu, MEM_v &mem)
+{
+    try {
+        switch(cpu.index()) {
+        case 0: {
+            shared_ptr<CPU<uint8_t>> c8 = std::get<shared_ptr<CPU<uint8_t>>>(cpu);
+            shared_ptr<Memory<uint8_t>> m8 = std::get<shared_ptr<Memory<uint8_t>>>(mem);
+            c8->addMemory(m8);
+            }
+            break;
+        case 1: {
+            shared_ptr<CPU<uint16_t>> c16 = std::get<shared_ptr<CPU<uint16_t>>>(cpu);
+            shared_ptr<Memory<uint16_t>> m16 = std::get<shared_ptr<Memory<uint16_t>>>(mem);
+            c16->addMemory(m16);
+            }
+            break;
+        case 2: {
+            shared_ptr<CPU<uint32_t>> c32 = std::get<shared_ptr<CPU<uint32_t>>>(cpu);
+            shared_ptr<Memory<uint32_t>> m32 = std::get<shared_ptr<Memory<uint32_t>>>(mem);
+            c32->addMemory(m32);
+            }
+            break;
+        case 3: {
+            shared_ptr<CPU<uint64_t>> c64 = std::get<shared_ptr<CPU<uint64_t>>>(cpu);
+            shared_ptr<Memory<uint64_t>> m64 = std::get<shared_ptr<Memory<uint64_t>>>(mem);
+            c64->addMemory(m64);
+            }
+            break;
+        }
+    } catch(std::bad_variant_access const& ex) {
+        std::cerr << "Invalid CPU/Memory combination." << std::endl;
+    }
+}
+
+
+
+void System::attachIO(CPU_v & cpu, IO_v & io)
+{
+    try {
+        switch(cpu.index()) {
+        case 0: {
+            shared_ptr<CPU<uint8_t>> c8 = std::get<shared_ptr<CPU<uint8_t>>>(cpu);
+            shared_ptr<IO<uint8_t>> i8 = std::get<shared_ptr<IO<uint8_t>>>(io);
+            c8->addIo(i8);
+            }
+            break;
+        case 1: {
+            shared_ptr<CPU<uint16_t>> c16 = std::get<shared_ptr<CPU<uint16_t>>>(cpu);
+            shared_ptr<IO<uint16_t>> i16 = std::get<shared_ptr<IO<uint16_t>>>(io);
+            c16->addIo(i16);
+            }
+            break;
+        case 2: {
+            shared_ptr<CPU<uint32_t>> c32 = std::get<shared_ptr<CPU<uint32_t>>>(cpu);
+            shared_ptr<IO<uint32_t>> i32 = std::get<shared_ptr<IO<uint32_t>>>(io);
+            c32->addIo(i32);
+            }
+            break;
+        case 3: {
+            shared_ptr<CPU<uint64_t>> c64 = std::get<shared_ptr<CPU<uint64_t>>>(cpu);
+            shared_ptr<IO<uint64_t>> i64 = std::get<shared_ptr<IO<uint64_t>>>(io);
+            c64->addIo(i64);
+            }
+            break;
+        }
+    } catch(std::bad_variant_access const& ex) {
+        std::cerr << "Invalid CPU/IO combination." << std::endl;
+    }
+}
+
+void System::attachDevice(IO_v & io, DEV_v & dev)
+{
+    try {
+        switch(io.index()) {
+        case 0: {
+            shared_ptr<Device<uint8_t>> d8 = std::get<shared_ptr<Device<uint8_t>>>(dev);
+            shared_ptr<IO<uint8_t>> i8 = std::get<shared_ptr<IO<uint8_t>>>(io);
+            i8->addDevice(d8);
+            }
+            break;
+        case 1: {
+            shared_ptr<Device<uint16_t>> d16 = std::get<shared_ptr<Device<uint16_t>>>(dev);
+            shared_ptr<IO<uint16_t>> i16 = std::get<shared_ptr<IO<uint16_t>>>(io);
+            i16->addDevice(d16);
+            }
+            break;
+        case 2: {
+            shared_ptr<Device<uint32_t>> d32 = std::get<shared_ptr<Device<uint32_t>>>(dev);
+            shared_ptr<IO<uint32_t>> i32 = std::get<shared_ptr<IO<uint32_t>>>(io);
+            i32->addDevice(d32);
+            }
+            break;
+        case 3: {
+            shared_ptr<Device<uint64_t>> d64 = std::get<shared_ptr<Device<uint64_t>>>(dev);
+            shared_ptr<IO<uint64_t>> i64 = std::get<shared_ptr<IO<uint64_t>>>(io);
+            i64->addDevice(d64);
+            }
+            break;
+        }
+    } catch(std::bad_variant_access const& ex) {
+        std::cerr << "Invalid CPU/Device combination." << std::endl;
+    }
+}
 
 
 }

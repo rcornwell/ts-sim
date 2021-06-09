@@ -94,7 +94,7 @@ ConfigToken ConfigLexer::get_token(bool keyword)
     std::istream& input = *p_input;
     buffer.clear();
     value = 0;
-    char c = input.get();
+    int c = input.get();
 
     // Skip end leading white space.
     while (isspace(c)) c = input.get();

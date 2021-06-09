@@ -2,3 +2,5 @@
 #define VERSION_MINOR @ts-sim_VERSION_MINOR@
 
 #cmakedefine HAVE_UNISTD_H
+#cmakedefine HAVE_TERMIO_H
+#cmakedefine HAVE_TERMIOS_H
