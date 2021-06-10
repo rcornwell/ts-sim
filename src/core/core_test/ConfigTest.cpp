@@ -81,12 +81,12 @@ template <enum cpu_model MOD>
 class test_cpu : public CPU<uint32_t>
 {
 public:
-    test_cpu() 
+    test_cpu()
     {
         timer = false;
         home = 0;
     }
-    
+
     virtual ~test_cpu()
     {
     }
@@ -96,14 +96,18 @@ public:
         if constexpr (MOD == s1) return "s1";
         if constexpr (MOD == s2) return "s2";
     }
-    
-    virtual int max_cpus() { return 1; }
-    
+
+    virtual int max_cpus()
+    {
+        return 1;
+    }
+
     bool   timer;
     int    home;
 
     virtual
-    core::ConfigOptionParser options() {
+    core::ConfigOptionParser options()
+    {
         core::ConfigOptionParser option("CPU options");
         auto tim_opt = option.add<core::ConfigBool>("timer", "Optional timer", &timer);
         auto hom_opt = option.add<core::ConfigValue<int>>("home", "Home space offset", 0, &home);
@@ -115,7 +119,8 @@ template class test_cpu<s1>;
 template class test_cpu<s2>;
 }
 
-namespace core {
+namespace core
+{
 map<string, SystemFactory *> System::factories;
 REGISTER_SYSTEM(test);
 map<string, CPUFactory *> test::cpu_factories;
@@ -127,109 +132,128 @@ REGISTER_CPU(test, s2);
 };
 
 
-TEST_GROUP(Config) {
+TEST_GROUP(ConfigFile)
+{
 };
 
-    TEST(Config, Start) {
-        core::Config conf;
-        string ist{"system test"};
-        CHECK(conf(ist));
-        CHECK_EQUAL(conf.sys->getType(), "test");
-    }
-    
-    TEST(Config, Start1) {
-        core::Config conf;
-        string ist{"system test2"};
-        CHECK(!conf(ist));
-        CHECK(conf.sys == nullptr);
-    }
+TEST(ConfigFile, Start)
+{
+    core::ConfigFile conf;
+    string ist{"system test"};
+    CHECK(conf(ist));
+    CHECK_EQUAL(conf.sys->getType(), "test");
+}
 
-   TEST(Config, Start2) {
-        core::Config conf;
-        string ist{"cpu test"};
-        CHECK(!conf(ist));
-    }
-    
-    TEST(Config, CPUMake) {
-        core::Config conf;
-        string ist{"system test cpu s1:hello"};
-        CHECK(conf(ist));
-        CHECK_EQUAL(conf.sys->number_cpus(), 1u);
-        core::CPU_v& cpu_v = conf.sys->cpus[0];
-        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
-        CHECK_EQUAL(name, "hello");
-        std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
-                std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
-        std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
-                std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
-        CHECK_EQUAL(cpu->timer, false);
-        CHECK_EQUAL(cpu->home, 0);
-    }
-    
-    TEST(Config, CPUOptions1) {
-        core::Config conf;
-        string ist{"system test cpu s2:hello2() "};
-        CHECK(conf(ist));
-        core::CPU_v& cpu_v = conf.sys->cpus[0];
-        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
-        CHECK_EQUAL(name, "hello2");
-        std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
-                std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
-        std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
-                std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
-        CHECK_EQUAL(cpu->timer, false);
-        CHECK_EQUAL(cpu->home, 0);
-    }
+TEST(ConfigFile, Start1)
+{
+    core::ConfigFile conf;
+    string ist{"system test2"};
+    CHECK(!conf(ist));
+    CHECK(conf.sys == nullptr);
+}
 
-    TEST(Config, CPUOptions2) {
-        core::Config conf;
-        string ist{"system test cpu s1:opt_hello(timer,home=055) "};
-        CHECK(conf(ist));
-        core::CPU_v& cpu_v = conf.sys->cpus[0];
-        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
-        CHECK_EQUAL(name, "opt_hello");
-        std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
-                std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
-        std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
+TEST(ConfigFile, Start2)
+{
+    core::ConfigFile conf;
+    string ist{"cpu test"};
+    CHECK(!conf(ist));
+}
+
+TEST(ConfigFile, CPUMake)
+{
+    core::ConfigFile conf;
+    string ist{"system test cpu s1:hello"};
+    CHECK(conf(ist));
+    CHECK_EQUAL(conf.sys->number_cpus(), 1u);
+    core::CPU_v& cpu_v = conf.sys->cpus[0];
+    string name = std::visit([](const auto& obj) {
+        return obj->getName();
+    }, cpu_v);
+    CHECK_EQUAL(name, "hello");
+    std::shared_ptr<emulator::CPU<uint32_t>> cpu_x =
+            std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
+    std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
                 std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
-        CHECK_EQUAL(cpu->timer, true);
-        CHECK_EQUAL(cpu->home, 055);
-    }
-    
-    TEST(Config, CPUOptions3) {
-        core::Config conf;
-        string ist{"system test"};
-        string ist2{"cpu s1:opt_hello(home=057) "};
-        CHECK(conf(ist));
-        CHECK(conf(ist2));
-        core::CPU_v& cpu_v = conf.sys->cpus[0];
-        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
-        CHECK_EQUAL(name, "opt_hello");
-        std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
-                std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
-        std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
+    CHECK_EQUAL(cpu->timer, false);
+    CHECK_EQUAL(cpu->home, 0);
+}
+
+TEST(ConfigFile, CPUOptions1)
+{
+    core::ConfigFile conf;
+    string ist{"system test cpu s2:hello2() "};
+    CHECK(conf(ist));
+    core::CPU_v& cpu_v = conf.sys->cpus[0];
+    string name = std::visit([](const auto& obj) {
+        return obj->getName();
+    }, cpu_v);
+    CHECK_EQUAL(name, "hello2");
+    std::shared_ptr<emulator::CPU<uint32_t>> cpu_x =
+            std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
+    std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
                 std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
-        CHECK_EQUAL(cpu->timer, false);
-        CHECK_EQUAL(cpu->home, 057);
-    }
-  
+    CHECK_EQUAL(cpu->timer, false);
+    CHECK_EQUAL(cpu->home, 0);
+}
+
+TEST(ConfigFile, CPUOptions2)
+{
+    core::ConfigFile conf;
+    string ist{"system test cpu s1:opt_hello(timer,home=055) "};
+    CHECK(conf(ist));
+    core::CPU_v& cpu_v = conf.sys->cpus[0];
+    string name = std::visit([](const auto& obj) {
+        return obj->getName();
+    }, cpu_v);
+    CHECK_EQUAL(name, "opt_hello");
+    std::shared_ptr<emulator::CPU<uint32_t>> cpu_x =
+            std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
+    std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
+                std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
+    CHECK_EQUAL(cpu->timer, true);
+    CHECK_EQUAL(cpu->home, 055);
+}
+
+TEST(ConfigFile, CPUOptions3)
+{
+    core::ConfigFile conf;
+    string ist{"system test"};
+    string ist2{"cpu s1:opt_hello(home=057) "};
+    CHECK(conf(ist));
+    CHECK(conf(ist2));
+    core::CPU_v& cpu_v = conf.sys->cpus[0];
+    string name = std::visit([](const auto& obj) {
+        return obj->getName();
+    }, cpu_v);
+    CHECK_EQUAL(name, "opt_hello");
+    std::shared_ptr<emulator::CPU<uint32_t>> cpu_x =
+            std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
+    std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
+                std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
+    CHECK_EQUAL(cpu->timer, false);
+    CHECK_EQUAL(cpu->home, 057);
+}
+
 #if 0
-    TEST(Config, MemOptions1) {
-        core::Config conf;
-        string ist1{"system test"};
-        string ist2{"cpu s1:opt_hello(timer,home=055) "};
-        string ist3{"memory m1:mem=opt_hello 64k ()"};
-        CHECK(conf(ist1));
-        CHECK(conf(ist2));
-        CHECK(conf(ist3));
-        core::CPU_v& cpu_v = conf.sys->cpus[0];
-        string name = std::visit([](const auto& obj) { return obj->getName(); }, cpu_v);
-        CHECK_EQUAL(name, "opt_hello");
-        std::shared_ptr<emulator::CPU<uint32_t>> cpu_x = 
-                std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
-        std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
+TEST(ConfigFile, MemOptions1)
+{
+    core::ConfigFile conf;
+    string ist1{"system test"};
+    string ist2{"cpu s1:opt_hello(timer,home=055) "};
+    string ist3{"memory m1:mem=opt_hello 64k ()"};
+    CHECK(conf(ist1));
+    CHECK(conf(ist2));
+    CHECK(conf(ist3));
+    core::CPU_v& cpu_v = conf.sys->cpus[0];
+    string name = std::visit([](const auto& obj) {
+        return obj->getName();
+    }, cpu_v);
+    CHECK_EQUAL(name, "opt_hello");
+    std::shared_ptr<emulator::CPU<uint32_t>> cpu_x =
+            std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
+    std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
                 std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
-        CHECK_EQUAL(cpu->timer, true);
-        CHECK_EQUAL(cpu->home, 055);
-    }
+    CHECK_EQUAL(cpu->timer, true);
+    CHECK_EQUAL(cpu->home, 055);
+}
 #endif

@@ -58,14 +58,14 @@
 
 namespace core {
 
-class Config
+class ConfigFile
 {
 public:
-    Config() : sys(nullptr), p_lexer(nullptr)
+    ConfigFile() : sys(nullptr), p_lexer(nullptr)
     {
     }
     
-    ~Config()
+    ~ConfigFile()
     {
     }
 

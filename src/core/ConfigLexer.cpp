@@ -92,23 +92,26 @@ void ConfigLexer::advance(bool keyword)
 ConfigToken ConfigLexer::get_token(bool keyword)
 {
     std::istream& input = *p_input;
+    char  c;
     buffer.clear();
     value = 0;
-    int c = input.get();
+    input.get(c);
 
     // Skip end leading white space.
-    while (isspace(c)) c = input.get();
-    if (!input) return ConfigToken::EOFSym;
+    while (isspace(c) && input.good()) {
+        input.get(c);
+    }
+    if (!input.good()) return ConfigToken::EOFSym;
 
     // See if this is a identifier or keyword.
     if (isalpha(c) || (!keyword && isdigit(c))) {
         buffer = tolower(c);
-        c = input.get();
+        input.get(c);
 
         // Grab all alphanumeric or _.
-        while (isalnum(c) || c == '_') {
+        while (input.good() && (isalnum(c) || c == '_')) {
             buffer += tolower(c);
-            c = input.get();
+            input.get(c);
         }
 
         input.putback(c);
@@ -127,15 +130,15 @@ ConfigToken ConfigLexer::get_token(bool keyword)
 
     // Check if it could be a string.
     if (c == '"') {
-        c = input.get();
+        input.get(c);
         while (c != '"') {
             buffer += c;
-            c = input.get();
+            input.get(c);
             // Check if double ", which becomes single.
             if (c == '"') {
                 if (input.peek() == '"') {
                     buffer += c;
-                    c = input.get();
+                    input.get(c);
                 } else {
                     break;
                 }
@@ -158,21 +161,22 @@ ConfigToken ConfigLexer::get_token(bool keyword)
         size_t scale = 1;
         // Check for leading 0x.
         if (c == '0') {
-            c = tolower(input.get());
+            input.get(c);
+            c = tolower(c);
             if (c == 'x') { // Hex number.
                 base = 16;
-                c = input.get();
+                input.get(c);
             } else { // Octal number?
                 base = 8;
             }
         }
         // Slurp up digits until none digit.
         buffer += c;
-        c = input.get();
+        input.get(c);
         bool last_b = false;
         while (isxdigit(c)) {
             buffer += c;
-            c = input.get();
+            input.get(c);
             // Look for binary tag.
             last_b = (tolower(c) == 'b');
         }
@@ -182,22 +186,22 @@ ConfigToken ConfigLexer::get_token(bool keyword)
         c = tolower(c);
         if (c == 'h') {
             base = 16;
-            c = input.get();
+            input.get(c);
         } else if (c == 'o') {
             base = 8;
-            c = input.get();
+            input.get(c);
         }
 
         // Check if possible scale.
         if (c == 'k') {
             scale = 1024;
-            c = input.get();
+            input.get(c);
         } else if (c == 'm') {
             scale = 1024 * 1024;
-            c = input.get();
+            input.get(c);
         } else if (c == 'g') {
             scale = 1024 * 1024 * 1024;
-            c = input.get();
+            input.get(c);
         }
 
         // Not something we want save it for next call.

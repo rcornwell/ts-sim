@@ -18,29 +18,8 @@ if(RUN_TESTS)
 # include core_test programs to run.
 add_subdirectory(core_test)
 endif()
-#add_executable(core_test core_test/main.cpp)
-#target_link_libraries(core_test corelib)
-#target_link_libraries(core_test UnitTest++)
-#target_include_directories(core_test PRIVATE ${UnitTest++_DIR})
-#add_test(NAME core_test COMMAND core_test)
-#add_custom_command(TARGET core_test POST_BUILD
-#       COMMAND core_test 
-#       COMMENT "Running core test" VERBATIM)
-
-# include core_test programs to run.
-#add_executable(opt_test core_test/opt-test.cpp)
-#target_link_libraries(opt_test corelib)
-#target_link_libraries(opt_test UnitTest++)
-#target_include_directories(opt_test PRIVATE ${UnitTest++_DIR})
-#add_test(NAME opt_test COMMAND opt_test)
-#add_custom_command(TARGET opt_test POST_BUILD
-#       COMMAND opt_test 
-#       COMMENT "Running option test" VERBATIM)
 project(cppcheck-analysis)
 
-#set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "")
-#set(CMAKE_VERBOSE_MAKEFILE ON CACHE BOOL "")
-#find(CppCheck)
 add_custom_target(cppcheck COMMAND cppcheck
         --enable=warning,performance,portability,information,missingInclude 
         --suppress=missingIncludeSystem
@@ -49,5 +28,4 @@ add_custom_target(cppcheck COMMAND cppcheck
         -I${CORE_PATH}
         ${CORE_PATH}
         )
-# Build documentation for core library
 

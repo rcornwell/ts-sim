@@ -32,7 +32,7 @@ namespace core
 
 using namespace std;
 
-bool Config::operator()(const string& s)
+bool ConfigFile::operator()(const string& s)
 {
     istringstream ist{s};
     p_lexer = new ConfigLexer{ist};
@@ -41,7 +41,7 @@ bool Config::operator()(const string& s)
     return r;
 }
 
-bool Config::parse_line()
+bool ConfigFile::parse_line()
 {
     try {
         p_lexer->advance();
@@ -93,7 +93,7 @@ bool Config::parse_line()
 }
 
 
-bool Config::parse_system()
+bool ConfigFile::parse_system()
 {
     // Make sure that system is defined only once.
     if (sys != nullptr) {
@@ -112,7 +112,7 @@ bool Config::parse_system()
     return true;
 }
 
-bool Config::parse_cpu()
+bool ConfigFile::parse_cpu()
 {
     CPU_v  cpu;
 
@@ -179,7 +179,7 @@ bool Config::parse_cpu()
 }
 
 //     Memory <type>[:name][=<cpu_name>,  or *] size [(<options>)] [load=<path>]
-bool Config::parse_memory()
+bool ConfigFile::parse_memory()
 {
     MemInfo  meminfo;
     MEM_v    mem;
