@@ -42,6 +42,7 @@
 #include <memory>
 #include <string>
 #include <map>
+#include <variant>
 #include "Memory.h"
 #include "IO.h"
 #include "ConfigOption.h"

@@ -250,7 +250,6 @@ TEST(CPU, CPUExer)
     delete cpu;
 }
 
-#if 0
 TEST(CPU, CPU85Exer)
 {
     uint64_t  tim = 0;
@@ -273,9 +272,9 @@ TEST(CPU, CPU85Exer)
     mem->Set(0323, 5);  // Output
     mem->Set(0001, 6);  // Not important.
     mem->Set(0xc9, 7);  // return instruction.
-	for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
-	    mem->write(bdos_buffer[i], i+5);
-	}
+//	for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
+//	    mem->write(bdos_buffer[i], i+5);
+//	}
 
     auto start = chrono::high_resolution_clock::now();
     while(cpu->running) {
@@ -297,7 +296,6 @@ TEST(CPU, CPU85Exer)
     CHECK_EQUAL (cpu->pc, 1u);
     delete cpu;
 }
-#endif
 
 TEST(CPU, CPUTEST)
 {

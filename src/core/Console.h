@@ -27,6 +27,7 @@
 
 #pragma once
 
+#include "config.h"
 #if (defined(__linux) || defined(__linux__))
 #ifdef HAVE_TERMIO_H
 #include <termio.h>
@@ -36,9 +37,11 @@
 #endif
 #include <fcntl.h>
 #include <sys/types.h>
+#include <errno.h>
 #endif
 #if (defined(_WIN32) || defined(_WIN64))
 #include <windows.h>
+#include <conio.h>
 #endif
 #include <thread>
 #include "Event.h"
@@ -46,9 +49,25 @@
 namespace core
 {
 
+enum class KeyType {
+    ascii, up, down, left, right, backspace, cancel, bol, eol, eof, ignore,
+    del, complete, accept, kill, search_up, search_down, position
+};
+
+enum class CmdState {
+    idle, quote, escape, brak, row, col
+};
+
+struct CmdKey {
+    enum KeyType key;
+    char       ch;
+    int        row;
+    int        col;
+};
+
 class Console_reader
 {
-    public:
+public:
     Console_reader(void *obj, void (*function)(void *o, void *ev))
         : obj(obj), function(function) {}
 
@@ -57,14 +76,31 @@ class Console_reader
         function(obj, ev);
     }
 
-    private:
+private:
     void *obj;
     void (*function)(void *o, void *ev);
 };
 
+class Command_reader
+{
+public:
+    Command_reader(void *obj, void (*function)(void *o, void *ev))
+        : obj(obj), function(function) {}
+
+    void recv_key(void *ev)
+    {
+        function(obj, ev);
+    }
+
+private:
+    void *obj;
+    void (*function)(void *o, void *ev);
+};
+
+
 class Console_wru
 {
-    public:
+public:
     Console_wru(void *obj, void (*function)(void *o, void *ev))
         : obj(obj), function(function) {}
 
@@ -73,14 +109,14 @@ class Console_wru
         function(obj, ev);
     }
 
-    private:
+private:
     void *obj;
     void (*function)(void *o, void *ev);
 };
 
 class Console_attn
 {
-    public:
+public:
     Console_attn(void *obj, void (*function)(void *o, void *ev))
         : obj(obj), function(function) {}
 
@@ -89,7 +125,7 @@ class Console_attn
         function(obj, ev);
     }
 
-    private:
+private:
     void *obj;
     void (*function)(void *o, void *ev);
 };
@@ -101,27 +137,8 @@ public:
     {
     }
 
-    virtual ~Console()
-    {
-        if (running) {
-            running = false;
-            // Kill running thread.
-            thrd->join();
-#if (defined(__linux) || defined(__linux__))
-            if (term_saved) {
-                int t;
-                if ((t = tcsetattr(term, TCSANOW, &save_termios)) < 0) {
-                    std::cerr << "Set failed " << t << " " << errno << std::endl;
-            } else {
-                    close(term);
-                    term_saved = false;
-                }
-            }
-#endif
-        }
-        delete send_char;
-        delete recv_char;
-    }
+    virtual ~Console();
+
 
     Console(const Console&) = delete;
     Console& operator=(const Console&) = delete;
@@ -131,134 +148,23 @@ public:
         static Console instance;
         return &instance;
     }
+    void init();
 
-    void init()
-    {
-#if (defined(__linux) || defined(__linux__))
-        struct termios  buf;
+    Event* getSendChar();
 
-        if (term_saved)
-            return;
-        term = open("/dev/tty", O_ASYNC|O_NONBLOCK|O_RDWR);
-        if (term < 0)
-            return;
-        if (tcgetattr(term, &save_termios) < 0) /* get the original state */
-            return;
+    Event* getCmd_send_char();
 
-        if (tcgetattr(term, &buf) < 0) /* get the original state */
-            return;
+    void addCmd_recv_key(Command_reader *rdr);
 
-        buf.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-        /* echo off, canonical mode off, extended input
-           processing off, signal chars off */
+    void addReadChar(Console_reader *rdr);
 
-        buf.c_iflag &= ~(BRKINT | ICRNL | ISTRIP | IXON);
-        /* no SIGINT on BREAK, CR-toNL off, input parity
-           check off, don't strip the 8th bit on input,
-           ouput flow control off */
+    void addWruEvent(Console_wru *wru_);
 
-        buf.c_cflag &= ~(CSIZE | PARENB);
-        /* clear size bits, parity checking off */
+    void addAttnEvent(Console_attn *attn_);
 
-        buf.c_cflag |= CS8;
-        /* set 8 bits/char */
+    void shutdown();
 
-        buf.c_oflag &= ~(OPOST);
-        /* output processing off */
-
-        buf.c_cc[VMIN] = 1;  /* 1 byte at a time */
-        buf.c_cc[VTIME] = 0; /* no timer on input */
-
-        if (tcsetattr(term, TCSANOW, &buf) >= 0) {
-            term_saved = true;
-        }
-#endif
-
-        // Create a thread.
-        if (!running) {
-            thrd = new std::thread(&Console::start_reader, this);
-
-            // Create send character listener.
-            EventCallback<Console>*callback =
-                   new EventCallback<Console>(this, &Console::show_char);
-            send_char = new Event();
-            send_char->addListener(callback);
-            // And create recieve character event handler.
-            recv_char = new Event();
-            EventCallback<Console>*callback2 =
-                   new EventCallback<Console>(this, &Console::show_char);
-            cmd_s_char = new Event();
-            cmd_s_char->addListener(callback2);
-            cmd_r_char = new Event();
-            wru_event = new Event();
-            attn_event = new Event();
-       }
-    };
-
-    Event* getSendChar()
-    {
-        return send_char;
-    };
-
-    Event* getCmd_send_char()
-    {
-        return cmd_s_char;
-    }
-
-    void addCmd_recv_char(Console_reader *rdr)
-    {
-        EventCallback<Console_reader>*callback = new
-            EventCallback<Console_reader>(rdr, &Console_reader::recv_char);
-        cmd_r_char->addListener(callback);
-    }
-
-    void addReadChar(Console_reader *rdr)
-    {
-        EventCallback<Console_reader>*callback = new
-            EventCallback<Console_reader>(rdr, &Console_reader::recv_char);
-        recv_char->addListener(callback);
-    };
-
-    void addWruEvent(Console_wru *wru_)
-    {
-        EventCallback<Console_wru>*callback = new
-            EventCallback<Console_wru>(wru_, &Console_wru::wru);
-        wru_event->addListener(callback);
-    };
-
-    void addAttnEvent(Console_attn *attn_)
-    {
-        EventCallback<Console_attn>*callback = new
-            EventCallback<Console_attn>(attn_, &Console_attn::attn);
-        attn_event->addListener(callback);
-    };
-
-    void shutdown()
-    {
-        if (running) {
-            running = false;
-            // Kill running thread.
-            thrd->join();
-        }
-#if (defined(__linux) || defined(__linux__))
-        if (term_saved) {
-            int t;
-            if ((t = tcsetattr(term, TCSANOW, &save_termios)) < 0) {
-                std::cerr << "Set failed " << t << " " << errno << std::endl;
-            } else {
-                term_saved = false;
-                close(term);
-            }
-        }
-#endif
-    }
-
-    void show_char(void *ch)
-    {
-        if (running) {
-            write(term, ch, 1);
-        }
-    }
+    void show_char(void *ch);
 
 private:
     /**
@@ -281,35 +187,20 @@ private:
     bool             mode;                // Whether to send to command or system.
     int              wru = 05;            // Wakeup character.
     int              attn = 0;            // Input attentiion.
+    int              row;
+    int              col;
+    CmdState         cmd_state{CmdState::idle}; // Current command processing state.
 
-    static void start_reader(Console *self)
-    {
-        self->reader();
-    }
+#define CTRLC(x) x - '@'
+#if (defined(__linux) || defined(__linux__))
+    void recv_key(char ch);
+#else
+    void recv_key(int ch);
+#endif
 
-    void reader()
-    {
-    //char bell = '\007';
-        running = true;
-        while(running) {
-            char   c;
-            if (read(term, &c, 1) == 1) {
-                if (c == wru) {
-                    mode = !mode;
-                    wru_event->notify((void *)&mode);
-                } else if (attn != 0 && c == attn) {
-                    attn_event->notify((void *)&c);
-                } else if (mode) {
-                    cmd_r_char->notify((void *)&c);
-                } else {
-                    recv_char->notify((void *)&c);
-                }
-            }
-        }
-        return;
-    }
+    static void start_reader(Console *self);
 
-
+    void reader();
 };
 
 

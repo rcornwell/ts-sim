@@ -160,7 +160,8 @@ public:
 
     virtual CPU_v create_cpu(const std::string &model) = 0;
 
-    virtual MEM_v create_mem(const std::string &model, const size_t size, const size_t base = 0) = 0;
+    virtual MEM_v create_mem(const std::string &model, const size_t size, 
+            const size_t base = 0) = 0;
 
     virtual IO_v create_io(const std::string &model) = 0;
 

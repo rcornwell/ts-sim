@@ -18,12 +18,14 @@
  */
 #include <algorithm>
 #include "System.h"
+#include "Core.h"
 
 namespace core
 {
 
 using namespace std;
 using namespace emulator;
+
 
 void System::init()
 {
@@ -69,9 +71,7 @@ void System::init()
                 return obj->getName();
             }, cpu);
             // If Memory belongs to this CPU, add it.
-            if (mem.cpu_names.size() == 0 ||
-                find(mem.cpu_names.begin(), mem.cpu_names.end(), name)
-                != mem.cpu_names.end()) {
+            if (findString(mem.cpu_names, name)) {
                 attachMemory(cpu, mem.mem);
             }
         }
@@ -90,9 +90,7 @@ void System::init()
                 return obj->getName();
             }, cpu);
             // If Memory belongs to this CPU, add it.
-            if (io.cpu_names.size() == 0 ||
-                find(io.cpu_names.begin(), io.cpu_names.end(), name)
-                != io.cpu_names.end()) {
+            if (findString(io.cpu_names, name)) {
                 // Assign IO based on type match
                 attachIO(cpu, io.io);
             }
@@ -118,9 +116,7 @@ void System::init()
                 return obj->getName();
             }, io.io);
             // If Device belongs to this controller add it.
-            if (dev.io_names.size() == 0 ||
-                find(dev.io_names.begin(), dev.io_names.end(), name)
-                != dev.io_names.end()) {
+            if (findString(dev.io_names, name)) {
                 cerr << " Adding device: " << dev_name << " to " << name << endl;
                 // Assign Device based on type match
                 attachDevice(io.io, dev.dev);

@@ -18,6 +18,10 @@
  */
 
 #pragma once
+#include <stdio.h>
+#include <string>
+#include "Command.h"
+#include "Console.h"
 
 namespace core
 {
@@ -27,12 +31,72 @@ class CmdHistory
 public:
     CmdHistory()
     {
+        buf_ptr = 0;
+        buf_end = sizeof(buffer) - 1;
     }
+
     virtual ~CmdHistory()
     {
     }
 
+    virtual void init();
+
+    void send(const std::string & str);
+
+    void send_esc(const std::string & str);
+
+    void leftChar();
+
+    void rightChar();
+    
+    void moveBol();
+
+    void moveEol();
+
+    void backSpace();
+
+    void cancelLine();
+
+    void deleteNext();
+
+    void deleteEol();
+
+    void insertChar(char ch);
+
+    void acceptLine();
+    
+    void moveUp();
+
+    void searchUp();
+
+    void moveDown();
+
+    void searchDown();
+
+    void recv_key(const CmdKey *key);
+
+    void wru(const bool mode);
+    
+    static void recv_key(void *obj, void *ev);
+
+    static void wru_ev(void *obj, void *ev);
+
+    void clear_line();
+
+    void refresh();
+
+    Command            *cmd;
+    Console            *con;
+    Event              *send_char;
+    int                 pos;
+    char                buffer[1024];
+    size_t              buf_ptr;            // Index into buffer.
+    size_t              buf_end;            // Index end of buffer.
+    std::string         prompt{"sim> "};    // Prompt string.
+    std::vector<std::string>   history;     // Holds history record.
+    size_t              hist_pos;
+    bool                multiline;
+    int                 row;                // Command row.
 };
 
 }
-

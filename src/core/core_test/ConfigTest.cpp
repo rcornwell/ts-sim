@@ -234,6 +234,27 @@ TEST(ConfigFile, CPUOptions3)
     CHECK_EQUAL(cpu->home, 057);
 }
 
+TEST(ConfigFile, CPUOptions4)
+{
+    core::ConfigFile conf;
+    string ist{"System test"};
+    string ist2{"Cpu s1:Opt_hello(Home=057) "};
+    CHECK(conf(ist));
+    CHECK(conf(ist2));
+    core::CPU_v& cpu_v = conf.sys->cpus[0];
+    string name = std::visit([](const auto& obj) {
+        return obj->getName();
+    }, cpu_v);
+    CHECK_EQUAL(name, "Opt_hello");
+    std::shared_ptr<emulator::CPU<uint32_t>> cpu_x =
+            std::get<shared_ptr<emulator::CPU<uint32_t>>>(cpu_v);
+    std::shared_ptr<emulator::test_cpu<emulator::s2>> cpu =
+                std::static_pointer_cast<emulator::test_cpu<emulator::s2>>(cpu_x);
+    CHECK_EQUAL(cpu->timer, false);
+    CHECK_EQUAL(cpu->home, 057);
+}
+
+
 #if 0
 TEST(ConfigFile, MemOptions1)
 {

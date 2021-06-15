@@ -27,6 +27,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include "CmdHistory.h"
 #include "i8080_system.h"
 #include "i8080_cpu.h"
 #include "i8080_con.h"
@@ -67,6 +68,7 @@ void test_system()
 {
     uint64_t  tim = 0;
     uint64_t   n_inst = 0;
+    core::CmdHistory    c_hist{};
     // Create top level system object.
     shared_ptr<core::System> sys = core::System::create("i8080");
     // Create CPU and some memory.
@@ -102,6 +104,7 @@ void test_system()
     load_mem("gb01.bin", rom_m);
     // Final initialization.
     sys->init();
+    c_hist.init();
     cpu->setPC(0xf800);
     sys->start();
     // Inject halt opcode.

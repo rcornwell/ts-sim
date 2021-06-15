@@ -366,7 +366,7 @@ public:
         // Figure out how many chucks we need.
         size_t num = size / chunk_size;
         // Compute index shift.
-        for(shift_ = 0; chunk_size != (1u << shift_); shift_++);
+        for(shift_ = 0; chunk_size != (1llu << shift_); shift_++);
         // Allocate and initialize the memory.
         mem_ = new std::shared_ptr<Memory<T>> [num];
         // Set all entries to non-existant memory.

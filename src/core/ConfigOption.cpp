@@ -17,7 +17,7 @@
  *
  */
 
-
+#include "Core.h"
 #include "ConfigOption.h"
 
 namespace core
@@ -140,7 +140,7 @@ const std::vector<ConfigOption_ptr>& ConfigOptionParser::getOptions() const
 ConfigOption_ptr ConfigOptionParser::find_option(const std::string& name) const
 {
     for (const auto& option: options_)
-        if (option->getName() == name)
+        if (stringCompare(option->getName(), name))
             return option;
     return nullptr;
 }

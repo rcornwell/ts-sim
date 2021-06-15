@@ -1,8 +1,8 @@
-#include <ctype.h>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
+#include "Core.h"
 #include "ConfigFile.h"
 #include "ConfigLexer.h"
 
@@ -22,7 +22,7 @@ struct Keyword {
     ConfigToken value;
 };
 
-vector<Keyword> Keywords = {
+const vector<Keyword> Keywords = {
     {"system", ConfigToken::Sys},
     {"cpu", ConfigToken::Cpu},
     {"memory", ConfigToken::Mem},
@@ -105,12 +105,12 @@ ConfigToken ConfigLexer::get_token(bool keyword)
 
     // See if this is a identifier or keyword.
     if (isalpha(c) || (!keyword && isdigit(c))) {
-        buffer = tolower(c);
+        buffer = c;
         input.get(c);
 
         // Grab all alphanumeric or _.
         while (input.good() && (isalnum(c) || c == '_')) {
-            buffer += tolower(c);
+            buffer += c;
             input.get(c);
         }
 
@@ -121,8 +121,8 @@ ConfigToken ConfigLexer::get_token(bool keyword)
             return ConfigToken::Id;
 
         // Check if possible keyword.
-        for(const auto &id : Keywords) {
-            if (buffer == id.name)
+        for(const Keyword &id : Keywords) {
+            if (stringCompare(buffer, id.name))
                 return id.value;
         }
         return ConfigToken::Id;
@@ -157,49 +157,49 @@ ConfigToken ConfigLexer::get_token(bool keyword)
 
     // Perhaps a number?
     if (isdigit(c)) {
-        size_t base = 10;
-        size_t scale = 1;
+        int base = 10;
+        int scale = 1;
         // Check for leading 0x.
         if (c == '0') {
             input.get(c);
-            c = tolower(c);
-            if (c == 'x') { // Hex number.
+            if (c == 'x' || c == 'X') { // Hex number.
                 base = 16;
                 input.get(c);
             } else { // Octal number?
                 base = 8;
             }
         }
-        // Slurp up digits until none digit.
+        // Slurp up digits until non-digit.
         buffer += c;
         input.get(c);
         bool last_b = false;
         while (isxdigit(c)) {
             buffer += c;
-            input.get(c);
             // Look for binary tag.
-            last_b = (tolower(c) == 'b');
+            last_b = (c == 'b' || c == 'B');
+            input.get(c);
         }
-        if (last_b && base != 16)
+        if (last_b && base != 16) {
             base = 2;
+            buffer.pop_back();
+        }
         // Check next character, possible base..
-        c = tolower(c);
-        if (c == 'h') {
+        if (c == 'h' || c == 'H') {
             base = 16;
             input.get(c);
-        } else if (c == 'o') {
+        } else if (c == 'o' || c == 'O') {
             base = 8;
             input.get(c);
         }
 
         // Check if possible scale.
-        if (c == 'k') {
+        if (c == 'k' || c == 'K') {
             scale = 1024;
             input.get(c);
-        } else if (c == 'm') {
+        } else if (c == 'm' || c == 'M') {
             scale = 1024 * 1024;
             input.get(c);
-        } else if (c == 'g') {
+        } else if (c == 'g' || c == 'G') {
             scale = 1024 * 1024 * 1024;
             input.get(c);
         }
@@ -210,17 +210,16 @@ ConfigToken ConfigLexer::get_token(bool keyword)
         // Convert the number based on base given to a value.
         value = 0;
         for (auto &ch : buffer) {
-            const string hexChars = "0123456789abcdef";
-            const size_t pos = hexChars.find(ch);
-            if (pos == string::npos)
+            int pos = hextoint(ch);
+            if (pos == 0x10)
                 throw Lexical_error{"Invalid digit: " + ch};
             if (pos >= base)
                 throw Lexical_error{"Digit out of range: " + ch};
-            value = (value * base) + pos;
+            value = (value * (size_t)base) + (uint64_t)pos;
         }
 
         // Scale by given scale.
-        value = value * scale;
+        value = value * (size_t)scale;
         return ConfigToken::Number;
     }
     return ConfigToken::EOFSym;

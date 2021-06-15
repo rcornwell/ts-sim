@@ -77,8 +77,8 @@ TEST(ConfigLexer, Blanks) {
     }
 
     TEST(ConfigLexer, Number) {
-	    std::vector<uint64_t> v { 12, 077, 0x40, 0xaf };
-	    std::istringstream ist{"12 077 0x40 0afh "};
+	    std::vector<uint64_t> v { 12, 077, 0x40, 0xaf, 0xbe, 5, 0x9a };
+	    std::istringstream ist{"12 077 0x40 0afh 0xBE 0101B 9aH "};
         core::ConfigLexer *lexer = new core::ConfigLexer{ist};
         CHECK(lexer != nullptr);
         lexer->advance();
@@ -102,6 +102,28 @@ TEST(ConfigLexer, Blanks) {
             ConfigToken::Mount, ConfigToken::RO, ConfigToken::EOFSym
         };
 	std::istringstream ist{"test \"test2\" system cpu device unit control units 032 ():=, load mount ro"};
+        ConfigLexer *lexer = new ConfigLexer{ist};
+        CHECK(lexer != nullptr);
+        lexer->advance();
+        for(ConfigToken i : v) {
+            CHECK(lexer->token() == i);
+            lexer->advance();
+        }
+        CHECK(lexer->token() == ConfigToken::EOFSym);
+        delete lexer;
+    }
+    
+    TEST(ConfigLexer, Tokens2) {
+        using namespace core;
+	std::vector<ConfigToken> v {
+            ConfigToken::Id, ConfigToken::Str, ConfigToken::Sys,
+            ConfigToken::Cpu, ConfigToken::Dev, ConfigToken::Unit,
+            ConfigToken::Ctl, ConfigToken::Units, ConfigToken::Number,
+            ConfigToken::Rparn, ConfigToken::Lparn, ConfigToken::Colon,
+            ConfigToken::Equal, ConfigToken::Comma, ConfigToken::Load,
+            ConfigToken::Mount, ConfigToken::RO, ConfigToken::EOFSym
+        };
+	std::istringstream ist{"TEST \"TEST2\" SYSTEM CPU DEVICE UNIT CONTROL UNITS 032 ():=, LOAD MOUNT RO"};
         ConfigLexer *lexer = new ConfigLexer{ist};
         CHECK(lexer != nullptr);
         lexer->advance();

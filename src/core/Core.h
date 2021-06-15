@@ -17,10 +17,17 @@
  *
  */
 
-#pargma once
+#pragma once
 #include <mutex>
+#include <condition_variable>
 #include <memory>
+#include <string>
+#include <vector>
 
+bool compareChar(const char & c1, const char & c2);
+bool stringCompare(const std::string & str1, const std::string & str2);
+bool findString(const std::vector<std::string> list, const std::string & str );
+int hextoint(const char & c);
 
 template <typename T>
 class RingBuffer
@@ -40,7 +47,7 @@ public:
     void put(T item)
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        not_full_.wait(lock, [this]() { return size() < max_size_); });
+        not_full_.wait(lock, [this]() { return (size() < max_size_); });
         buffer_[head_] = item;
         if (++head_ == max_size_) {
             head_ = 0;
@@ -70,7 +77,7 @@ public:
         auto val = buffer_[tail_];
         full_ = false;
         if (++tail_ == max_size_)
-            tail = 0;
+            tail_ = 0;
         not_full_.notify_one();
         return val;
     }
@@ -83,7 +90,7 @@ public:
         val = buffer_[tail_];
         full_ = false;
         if (++tail_ == max_size_)
-            tail = 0;
+            tail_ = 0;
         not_full_.notify_one();
         return true;
     }
@@ -123,10 +130,10 @@ public:
 private:
     std::mutex mutex_;
     std::unique_ptr<T[]> buffer_;
-    std::conditional_variable not_full_;
-    std::conditional_variable not_empty_;
+    std::condition_variable not_full_;
+    std::condition_variable not_empty_;
     size_t head_ = 0;
     size_t tail_ = 0;
-    const size_t max_size;
+    const size_t max_size_;
     bool full_ = false;
-}
+};
