@@ -26,15 +26,28 @@
 namespace core
 {
 
+static void key_ev(void *obj, void *ev)
+{
+    CmdKey *key = ((CmdKey *)ev);
+    CmdHistory *o = (CmdHistory *)obj;
+    o->recv_key(key);
+}
+
+static void wru_ev(void *obj, void *ev)
+{
+    bool mode = *((bool *)ev);
+    CmdHistory *o = (CmdHistory *)obj;
+    o->wru(mode);
+}
 
 void CmdHistory::init()
 {
     con = core::Console::getInstance();
     con->init();
     send_char = con->getCmd_send_char();
-    core::Command_reader *rdr = new core::Command_reader(this, &recv_key);
+    Command_reader *rdr = new Command_reader(this, &key_ev);
     con->addCmd_recv_key(rdr);
-    core::Console_wru *wru = new core::Console_wru(this, &wru_ev);
+    Console_wru *wru = new Console_wru(this, &wru_ev);
     con->addWruEvent(wru);
 }
 
@@ -480,19 +493,6 @@ void CmdHistory::wru(const bool mode)
     }
 }
 
-void CmdHistory::recv_key(void *obj, void *ev)
-{
-    CmdKey *key = ((CmdKey *)ev);
-    CmdHistory *o = (CmdHistory *)obj;
-    o->recv_key(key);
-}
-
-void CmdHistory::wru_ev(void *obj, void *ev)
-{
-    bool mode = *((bool *)ev);
-    CmdHistory *o = (CmdHistory *)obj;
-    o->wru(mode);
-}
 
 void CmdHistory::clear_line()
 {

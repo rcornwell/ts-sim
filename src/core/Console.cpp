@@ -384,7 +384,7 @@ void Console::recv_key(int ch)
     switch(cmd_state) {
     case CmdState::idle:
     default:
-        key.ch = ch;
+        key.ch = ch & 0xff;
         // Normal processing functions.
         switch (ch) {
         case CTRLC('A'):
@@ -538,8 +538,7 @@ void Console::recv_key(int ch)
         }
         break;
     }
-}
-cmd_r_char->notify((void *)&key);
+    cmd_r_char->notify((void *)&key);
 }
 #endif
 

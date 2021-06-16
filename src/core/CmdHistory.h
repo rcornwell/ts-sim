@@ -77,10 +77,6 @@ public:
 
     void wru(const bool mode);
     
-    static void recv_key(void *obj, void *ev);
-
-    static void wru_ev(void *obj, void *ev);
-
     void clear_line();
 
     void refresh();

@@ -61,6 +61,7 @@ ConfigLexer::ConfigLexer(std::istream *ps)
  */
 void ConfigLexer::init()
 {
+    p_input->clear();
 }
 
 /**
@@ -95,13 +96,15 @@ ConfigToken ConfigLexer::get_token(bool keyword)
     char  c;
     buffer.clear();
     value = 0;
+    if (input.fail()) return ConfigToken::EOFSym;
+
     input.get(c);
 
     // Skip end leading white space.
-    while (isspace(c) && input.good()) {
+    while (!input.fail() && isspace(c)) {
         input.get(c);
     }
-    if (!input.good()) return ConfigToken::EOFSym;
+    if (input.fail()) return ConfigToken::EOFSym;
 
     // See if this is a identifier or keyword.
     if (isalpha(c) || (!keyword && isdigit(c))) {
@@ -109,7 +112,7 @@ ConfigToken ConfigLexer::get_token(bool keyword)
         input.get(c);
 
         // Grab all alphanumeric or _.
-        while (input.good() && (isalnum(c) || c == '_')) {
+        while (!input.fail() && (isalnum(c) || c == '_')) {
             buffer += c;
             input.get(c);
         }

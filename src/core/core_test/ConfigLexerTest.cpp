@@ -104,10 +104,9 @@ TEST(ConfigLexer, Blanks) {
 	std::istringstream ist{"test \"test2\" system cpu device unit control units 032 ():=, load mount ro"};
         ConfigLexer *lexer = new ConfigLexer{ist};
         CHECK(lexer != nullptr);
-        lexer->advance();
         for(ConfigToken i : v) {
-            CHECK(lexer->token() == i);
             lexer->advance();
+            CHECK_EQUAL((int)i, (int)lexer->token());
         }
         CHECK(lexer->token() == ConfigToken::EOFSym);
         delete lexer;
@@ -126,10 +125,10 @@ TEST(ConfigLexer, Blanks) {
 	std::istringstream ist{"TEST \"TEST2\" SYSTEM CPU DEVICE UNIT CONTROL UNITS 032 ():=, LOAD MOUNT RO"};
         ConfigLexer *lexer = new ConfigLexer{ist};
         CHECK(lexer != nullptr);
-        lexer->advance();
         for(ConfigToken i : v) {
-            CHECK(lexer->token() == i);
             lexer->advance();
+            std::cerr << (int)lexer->token() << std::endl;
+            CHECK(lexer->token() == i);
         }
         CHECK(lexer->token() == ConfigToken::EOFSym);
         delete lexer;

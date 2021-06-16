@@ -89,11 +89,13 @@ target_link_libraries(i8080 corelib)
 target_link_libraries(i8080 ${CMAKE_THREAD_LIBS_INIT})
 
 if (RUN_TESTS) 
+message(${CMAKE_CURRENT_SOURCE_DIR})
 add_executable(i8080_test ${I8080_SRCS} src/i8080/test/main.cpp)
 target_include_directories(i8080_test PRIVATE "src/i8080")
 target_include_directories(i8080_test PRIVATE ${CPPUTEST_INCLUDE_DIRS})
 add_dependencies(i8080_test core_test)
-add_test(NAME i8080_test COMMAND i8080_test ../src/i8080/test)
+add_test(NAME i8080_test COMMAND i8080_test 
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/i8080/test)
 target_link_directories(i8080_test PRIVATE ${CPPUTEST_LIBRARIES})
 target_link_libraries(i8080_test corelib)
 if(MSVC)
@@ -102,7 +104,7 @@ endif()
 target_link_libraries(i8080_test ${CPPUTEST_LDFLAGS})
 add_custom_command(TARGET i8080_test POST_BUILD 
 	COMMAND i8080_test
-        WORKING_DIRECTORY ../src/i8080/test
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/i8080/test
 	COMMENT "Running i8080 test" VERBATIM)
 endif()
 

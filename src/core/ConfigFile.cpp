@@ -84,7 +84,7 @@ bool ConfigFile::parse_line()
         cout << "Lexical_error: " << e.get_message() << endl;
         return false;
     } catch(Config_error& e) {
-        cout << "Config error: " << e.get_message() << endl;
+     //   cout << "Config error: " << e.get_message() << endl;
         return false;
     }
     return true;

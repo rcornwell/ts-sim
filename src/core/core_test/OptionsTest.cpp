@@ -48,7 +48,7 @@ TEST_GROUP(OptionParser)
         auto int_option = op.add<option::OptionValue<int>>("i", "int", "test integer");
         const char *args[3] = { "prog", "-h", NULL };
         op.parse(2, args);
-        CHECK_EQUAL(help_option->is_set(), true);
+        CHECK_EQUAL(true, help_option->is_set());
     }
     
     TEST(OptionParser, Option2) {
@@ -57,7 +57,7 @@ TEST_GROUP(OptionParser)
         auto int_option = op.add<option::OptionValue<int>>("i", "int", "test integer");
         const char *args[4] = { "prog", "-i", "42", NULL };
         op.parse(3, args);
-        CHECK_EQUAL(int_option->is_set(), true);
-        CHECK_EQUAL(help_option->is_set(), false);
-        CHECK_EQUAL(int_option->getValue(), 42);
+        CHECK_EQUAL(true, int_option->is_set());
+        CHECK_EQUAL(false, help_option->is_set());
+        CHECK_EQUAL(42, int_option->getValue());
     }
