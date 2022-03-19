@@ -63,10 +63,6 @@ REGISTER_SYSTEM_TEMPLATE_DEV
 //    virtual void shutdown();
 //    virtual void run();
 //    virtual void stop();
-private:
-//     std::shared_ptr<emulator::CPU<uint8_t>>  cpu;
- //    std::shared_ptr<emulator::Memory<uint8_t>>  mem;
-  //   std::shared_ptr<emulator::IO<uint8_t>>   io;
 
 };
 }

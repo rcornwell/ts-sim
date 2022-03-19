@@ -103,20 +103,15 @@ inline uint8_t i8080_cpu<MOD>::flag_gen(uint8_t v)
 template <cpu_model MOD>
 inline void i8080_cpu<MOD>::o_add(uint8_t v)
 {
-    uint16_t  t;
     uint8_t   a = fetch_reg<A>();
-    uint8_t   ac;
-    uint8_t   c;
+    uint8_t   t = a + v;
+    uint8_t   c = (a & v) | ((a ^ v) & ~t);
 
-    ac = (a & 0xf) + (v & 0xf);
-    t = (uint16_t)a + (uint16_t)v;
-    c = (t & 0x100) != 0;
-    t &= 0xff;
-    PSW = flag_gen(t) | (ac & 0x10) | c;
+    PSW = flag_gen(t) | ((c << 1) & 0x10) | ((c >> 7) & 0x1);
     if constexpr (MOD == I8085) {
-        if ((((a&v) | (a&t) | (v&t)) & SIGN) != 0)
+        if ((((c << 1) ^ c ^ t) & SIGN) != 0)
             PSW |= XFLG;
-        if ((((a & v & ~t) | (~a & ~v & t)) & SIGN) != 0)
+        if ((((c << 1) ^ c) & SIGN) != 0)
             PSW |= VFLG;
     }
     set_reg<A>(t);
@@ -127,18 +122,14 @@ inline void i8080_cpu<MOD>::o_adc(uint8_t v)
 {
     uint8_t   a = fetch_reg<A>();
     uint8_t   c = PSW & CARRY;
-    uint16_t  t;
-    uint8_t   ac;
+    uint8_t   t = a + v + c;
 
-    ac = (a & 0xf) + (v & 0xf) + c;
-    t = (uint16_t)a + (uint16_t)v + c;
-    c = (t & 0x100) != 0;
-    t &= 0xff;
-    PSW = flag_gen(t) | (ac & 0x10) | c;
+    c = (a & v) | ((a ^ v) & ~t);
+    PSW = flag_gen(t) | ((c << 1) & 0x10) | ((c >> 7) & 1);
     if constexpr (MOD == I8085) {
-        if ((((a&v) | (a&t) | (v&t)) & SIGN) != 0)
+        if ((((c << 1) ^ c ^ t) & SIGN) != 0)
             PSW |= XFLG;
-        if ((((a & v & ~t) | (~a & ~v & t)) & SIGN) != 0)
+        if ((((c << 1) ^ c) & SIGN) != 0)
             PSW |= VFLG;
     }
     set_reg<A>(t);
@@ -148,20 +139,19 @@ template <cpu_model MOD>
 inline void i8080_cpu<MOD>::o_sub(uint8_t v)
 {
     uint8_t   a = fetch_reg<A>();
-    uint16_t  t;
-    uint8_t   ac;
+    uint8_t   t;
     uint8_t   c;
 
     v ^= 0xff;
-    ac = (a & 0xf) + (v & 0xf) + 1;
-    t = (uint16_t)a + (uint16_t)v + 1;
-    c = (t & 0x100) == 0;
-    t &= 0xff;
-    PSW = flag_gen(t) | (ac & 0x10) | c;
+    t = a + v + 1;
+    c = (a & v) | ((a ^ v) & ~t);
+    c ^= 0x80;
+    PSW = flag_gen(t) | ((c << 1) & 0x10) | ((c >> 7) & 1);
+
     if constexpr (MOD == I8085) {
-        if ((((a&~v) | (t&a) | (t&~v)) & SIGN) != 0)
+        if ((((c << 1) ^ c ^ t) & SIGN) != 0)
             PSW |= XFLG;
-        if ((((a & v & ~t) | (~a & ~v & t)) & SIGN) != 0)
+        if ((((c << 1) ^ c) & SIGN) != 0)
             PSW |= VFLG;
     }
     set_reg<A>(t);
@@ -171,21 +161,20 @@ template <cpu_model MOD>
 inline void i8080_cpu<MOD>::o_sbb(uint8_t v)
 {
     uint8_t   a = fetch_reg<A>();
-    uint16_t  t;
-    uint8_t   ac;
+    uint8_t   t;
     uint8_t   c;
 
-    c= !(PSW & CARRY);
+    c = !(PSW & CARRY);
     v ^= 0xff;
-    ac = (a & 0xf) + (v & 0xf) + c;
-    t = (uint16_t)a + (uint16_t)v + c;
-    c = (t & 0x100) == 0;
-    t &= 0xff;
-    PSW = flag_gen(t) | (ac & 0x10) | c;
+    t = a + v + c;
+    c = (a & v) | ((a ^ v) & ~t);
+    c ^= 0x80;
+    PSW = flag_gen(t) | ((c << 1) & 0x10) | ((c >> 7) & 1);
+
     if constexpr (MOD == I8085) {
-        if ((((a&~v) | (t&a) | (t&~v)) & SIGN) != 0)
-            PSW |= XFLG;
-        if ((((a & v & ~t) | (~a & ~v & t)) & SIGN) != 0)
+        if ((((c << 1) ^ c ^ t) & SIGN) != 0)
+           PSW |= XFLG;
+        if ((((c << 1) ^ c) & SIGN) != 0)
             PSW |= VFLG;
     }
     set_reg<A>(t);
@@ -248,16 +237,14 @@ template <cpu_model MOD>
 inline void i8080_cpu<MOD>::o_cmp(uint8_t v)
 {
     uint8_t   a = fetch_reg<A>();
-    uint16_t  t;
-    uint8_t   ac;
+    uint8_t   t;
     uint8_t   c;
 
     v ^= 0xff;
-    ac = (a & 0xf) + (v & 0xf) + 1;
-    t = (uint16_t)a + (uint16_t)v + 1;
-    c = (t & 0x100) == 0;
-    t &= 0xff;
-    PSW = flag_gen(t) | (ac & 0x10) | c;
+    t = a + v + 1;
+    c = (a & v) | ((a ^ v) & ~t);
+    c ^= 0x80;
+    PSW = flag_gen(t) | ((c << 1) & 0x10) | ((c >> 7) & 1);
     if constexpr (MOD == I8085) {
         if ((((a&~v) | (t&a) | (t&~v)) & SIGN) != 0)
             PSW |= XFLG;
@@ -271,9 +258,9 @@ template <cpu_model MOD>
 inline void i8080_cpu<MOD>::o_daa()
 {
     uint8_t   a = fetch_reg<A>();
-    uint16_t  d = 0;
+    uint8_t   d = 0;
     uint8_t   c = 0;
-    uint16_t  t;
+    uint8_t   t;
     uint8_t   ac = 0;
 
 
@@ -285,7 +272,7 @@ inline void i8080_cpu<MOD>::o_daa()
         d += 0x60;
         c = 1;
     }
-    t = (a + d) & 0xff;
+    t = a + d;
     PSW = flag_gen(t) | (ac & 0x10) | c;
     set_reg<A>(t);
 }
@@ -295,7 +282,7 @@ template <reg_name R>
 inline void i8080_cpu<MOD>::o_inr()
 {
     uint8_t r = fetch_reg<R>();
-    uint8_t t = (uint16_t)(r) + 1;
+    uint8_t t = r + 1;
     uint8_t ac = ((t & 0xf) == 0) ? AC : 0;
 
     PSW &= CARRY;

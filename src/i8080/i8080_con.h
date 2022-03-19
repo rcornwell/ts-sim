@@ -242,7 +242,6 @@ public:
     private:
     core::Console       *con;
     core::Event         *send_char;
-//    core::Console_reader *recv_char;
     uint8_t     mode1_;
     uint8_t     mode2_;
     bool        mode_ptr_ = false;

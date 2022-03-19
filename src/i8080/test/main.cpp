@@ -172,14 +172,15 @@ TEST(CPU, CPUPRE)
     cpu->setIO(io);
     cpu->start();
     cpu->setPC(0x100);
+    cpu->running = true;
 
     mem->Set(0166, 0);    // Inject halt opcode.
-//        mem->write(0323, 5);  // Output
-//        mem->write(0001, 6);  // Not important.
-//        mem->write(0xc9, 7);  // return instruction.
-    for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
-        mem->Set(bdos_buffer[i], i+5);
-    }
+    mem->write(0323, 5);  // Output
+    mem->write(0001, 6);  // Not important.
+    mem->write(0xc9, 7);  // return instruction.
+//    for (size_t i = 0; i < sizeof(bdos_buffer); i++) {
+//        mem->Set(bdos_buffer[i], i+5);
+//    }
 
     auto start = chrono::high_resolution_clock::now();
     while(cpu->running) {
@@ -196,7 +197,8 @@ TEST(CPU, CPUPRE)
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
-    cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
+    int cy  = ((ctim.count() * 10) / (tim / 250));
+    cout << "Cycle time: " << (cy / 10) << "." << (cy % 10) << " ns" << endl;
     cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
     CHECK_EQUAL (cpu->pc, 1u);
     delete cpu;
@@ -220,6 +222,7 @@ TEST(CPU, CPUExer)
     cpu->setIO(io);
     cpu->start();
     cpu->setPC(0x100);
+    cpu->running = true;
 
     mem->Set(0166, 0);    // Inject halt opcode.
     mem->Set(0323, 5);  // Output
@@ -244,7 +247,8 @@ TEST(CPU, CPUExer)
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
-    cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
+    int cy  = ((ctim.count() * 10) / (tim / 250));
+    cout << "Cycle time: " << (cy / 10) << "." << (cy % 10) << " ns" << endl;
     cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
     CHECK_EQUAL (cpu->pc, 1u);
     delete cpu;
@@ -267,6 +271,7 @@ TEST(CPU, CPU85Exer)
     cpu->setIO(io);
     cpu->start();
     cpu->setPC(0x100);
+    cpu->running = true;
 
     mem->Set(0166, 0);    // Inject halt opcode.
     mem->Set(0323, 5);  // Output
@@ -291,7 +296,8 @@ TEST(CPU, CPU85Exer)
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
-    cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
+    int cy  = ((ctim.count() * 10) / (tim / 250));
+    cout << "Cycle time: " << (cy / 10) << "." << (cy % 10) << " ns" << endl;
     cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
     CHECK_EQUAL (cpu->pc, 1u);
     delete cpu;
@@ -314,6 +320,7 @@ TEST(CPU, CPUTEST)
     cpu->setIO(io);
     cpu->start();
     cpu->setPC(0x100);
+    cpu->running = true;
 
     mem->Set(0166, 0);    // Inject halt opcode.
 //        mem->write(0323, 5);  // Output
@@ -338,7 +345,8 @@ TEST(CPU, CPUTEST)
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
-    cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
+    int cy  = ((ctim.count() * 10) / (tim / 250));
+    cout << "Cycle time: " << (cy / 10) << "." << (cy % 10) << " ns" << endl;
     cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
     CHECK_EQUAL (cpu->pc, 1u);
     delete cpu;
@@ -361,6 +369,7 @@ TEST(CPU,TST8080)
     cpu->setIO(io);
     cpu->start();
     cpu->setPC(0x100);
+    cpu->running = true;
 
     mem->Set(0166, 0);    // Inject halt opcode.
 //        mem->write(0323, 5);  // Output
@@ -385,7 +394,8 @@ TEST(CPU,TST8080)
     cout << "Run time: " << s.count() << " seconds" << endl;
     auto ctim = chrono::duration_cast<chrono::nanoseconds>(end - start);
     cout << "Time: " << ctim.count() << " ns" << endl;
-    cout << "Cycle time: " << (tim / ctim.count()) << " ns" << endl;
+    int cy  = ((ctim.count() * 10) / (tim / 250));
+    cout << "Cycle time: " << (cy / 10) << "." << (cy % 10) << " ns" << endl;
     cout << "Instruct time: " << (ctim.count() / n_inst) << " ns" << endl;
     CHECK_EQUAL (cpu->pc, 1u);
     delete cpu;

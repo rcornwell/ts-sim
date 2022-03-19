@@ -416,7 +416,7 @@ public:
 
     virtual void start() override
     {
-        running = true;
+        running = false;
         io->start();
     };
 
@@ -441,6 +441,7 @@ public:
 
     virtual void run() override
     {
+        running = true;
         io->run();
     };
 

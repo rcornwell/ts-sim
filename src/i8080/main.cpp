@@ -66,9 +66,7 @@ void load_mem(string name, shared_ptr<Memory<uint8_t>> mem)
 
 void test_system()
 {
-    uint64_t  tim = 0;
-    uint64_t   n_inst = 0;
-    core::CmdHistory    c_hist{};
+
     // Create top level system object.
     shared_ptr<core::System> sys = core::System::create("i8080");
     // Create CPU and some memory.
@@ -76,6 +74,9 @@ void test_system()
     core::MEM_v      ram_v = sys->create_mem("RAM", 62*1024, 0);
     core::MEM_v      rom_v = sys->create_mem("ROM", 2048, 0xf800);
     core::DEV_v      con_v = sys->create_dev("2651");
+    uint64_t         tim = 0;
+    uint64_t         n_inst = 0;
+    core::CmdHistory c_hist(sys);
 
     // Get pointers to specific classes, to simplify things.
     shared_ptr<CPU<uint8_t>> cpu = get<shared_ptr<CPU<uint8_t>>>(cpu_v);
@@ -107,6 +108,7 @@ void test_system()
     c_hist.init();
     cpu->setPC(0xf800);
     sys->start();
+    cpu->running = true;
     // Inject halt opcode.
     visit([](const auto& obj) {
         obj->Set(0166, 0);
